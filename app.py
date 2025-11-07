@@ -23,6 +23,8 @@ from templates import (
 )
 from moxfield_scraper import MoxfieldScraper, convert_moxfield_to_cockatrice
 import threading
+from updater import update_manager, check_for_updates, get_current_version
+from version import APP_NAME, APP_DESCRIPTION, GITHUB_REPO_URL
 
 
 def detect_cockatrice_installation():
@@ -297,6 +299,119 @@ class MainWindow:
         # Load curated themes
         self.refresh_themes_list()
 
+        # About tab
+        about_frame = ttk.Frame(notebook)
+        notebook.add(about_frame, text="About")
+
+        # Application info section
+        app_info_frame = ttk.LabelFrame(about_frame, text="Application Information")
+        app_info_frame.pack(fill=tk.X, padx=5, pady=5)
+
+        info_content_frame = ttk.Frame(app_info_frame)
+        info_content_frame.pack(fill=tk.X, padx=5, pady=5)
+
+        ttk.Label(
+            info_content_frame,
+            text=APP_NAME,
+            font=("TkDefaultFont", 12, "bold"),
+        ).pack(anchor=tk.W)
+
+        ttk.Label(
+            info_content_frame,
+            text=f"Version: {get_current_version()}",
+            font=("TkDefaultFont", 10),
+        ).pack(anchor=tk.W, pady=(2, 0))
+
+        ttk.Label(
+            info_content_frame,
+            text=APP_DESCRIPTION,
+            font=("TkDefaultFont", 9),
+        ).pack(anchor=tk.W, pady=(5, 0))
+
+        # Links frame
+        links_frame = ttk.Frame(info_content_frame)
+        links_frame.pack(anchor=tk.W, pady=(10, 0))
+
+        ttk.Button(
+            links_frame,
+            text="View on GitHub",
+            command=lambda: webbrowser.open(GITHUB_REPO_URL),
+        ).pack(side=tk.LEFT, padx=(0, 5))
+
+        ttk.Button(
+            links_frame,
+            text="Report Issues",
+            command=lambda: webbrowser.open(f"{GITHUB_REPO_URL}/issues"),
+        ).pack(side=tk.LEFT)
+
+        # Update section
+        update_info_frame = ttk.LabelFrame(about_frame, text="Updates")
+        update_info_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=(5, 5))
+
+        update_content_frame = ttk.Frame(update_info_frame)
+        update_content_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+        # Update status label
+        self.update_status_label = ttk.Label(
+            update_content_frame,
+            text="Checking for updates...",
+            font=("TkDefaultFont", 9),
+        )
+        self.update_status_label.pack(anchor=tk.W, pady=(0, 10))
+
+        # Update buttons frame
+        update_buttons_frame = ttk.Frame(update_content_frame)
+        update_buttons_frame.pack(anchor=tk.W, pady=(5, 0))
+
+        self.check_updates_btn = ttk.Button(
+            update_buttons_frame,
+            text="Check for Updates",
+            command=self.check_for_updates,
+        )
+        self.check_updates_btn.pack(side=tk.LEFT, padx=(0, 5))
+
+        self.download_update_btn = ttk.Button(
+            update_buttons_frame,
+            text="Download Update",
+            command=self.download_update,
+            state="disabled",
+        )
+        self.download_update_btn.pack(side=tk.LEFT, padx=(0, 5))
+
+        self.view_releases_btn = ttk.Button(
+            update_buttons_frame,
+            text="View All Releases",
+            command=lambda: update_manager.open_releases_page(),
+        )
+        self.view_releases_btn.pack(side=tk.LEFT)
+
+        # Release notes frame
+        notes_frame = ttk.LabelFrame(update_content_frame, text="Release Notes")
+        notes_frame.pack(fill=tk.BOTH, expand=True, pady=(10, 0))
+
+        # Release notes text widget with scrollbar
+        notes_text_frame = ttk.Frame(notes_frame)
+        notes_text_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+        self.release_notes_text = tk.Text(
+            notes_text_frame,
+            wrap=tk.WORD,
+            height=8,
+            state=tk.DISABLED,
+            font=("TkDefaultFont", 8),
+        )
+
+        notes_scrollbar = ttk.Scrollbar(
+            notes_text_frame, orient=tk.VERTICAL, command=self.release_notes_text.yview
+        )
+        self.release_notes_text.configure(yscrollcommand=notes_scrollbar.set)
+
+        self.release_notes_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        notes_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # Store update information
+        self.update_info = None
+
         # Status bar
         self.status_bar = ttk.Label(
             self.root, text="Ready", relief=tk.SUNKEN, anchor=tk.W
@@ -312,6 +427,9 @@ class MainWindow:
 
         # Load cached decks on startup
         self.root.after(200, self.load_initial_decks)
+
+        # Check for updates on startup (silent check using cache)
+        self.root.after(500, self.check_for_updates_silent)
 
     def load_initial_decks(self):
         """Load decks from cache on app startup."""
@@ -595,6 +713,241 @@ Click below to visit the official Cockatrice website where you can:
                 self.cache_status_label.config(text="No cache")
         except Exception:
             self.cache_status_label.config(text="")
+
+    def check_for_updates(self):
+        """Check for application updates in background thread."""
+        self.check_updates_btn.config(text="Checking...", state="disabled")
+        self.update_status_label.config(text="Checking for updates...")
+        self.download_update_btn.config(state="disabled")
+
+        def check_in_thread():
+            try:
+                # Force fresh check (don't use cache)
+                update_info = check_for_updates(use_cache=False)
+                # Update UI in main thread
+                self.root.after(0, self._handle_update_check_result, update_info)
+            except Exception as e:
+                self.root.after(0, self._handle_update_check_error, str(e))
+
+        threading.Thread(target=check_in_thread, daemon=True).start()
+
+    def _handle_update_check_result(self, update_info):
+        """Handle update check results in main thread."""
+        self.update_info = update_info
+        self.check_updates_btn.config(text="Check for Updates", state="normal")
+
+        if update_info.get("error"):
+            self.update_status_label.config(
+                text=f"Update check failed: {update_info['error']}", foreground="red"
+            )
+            self.release_notes_text.config(state=tk.NORMAL)
+            self.release_notes_text.delete(1.0, tk.END)
+            self.release_notes_text.insert(tk.END, "Failed to check for updates.")
+            self.release_notes_text.config(state=tk.DISABLED)
+            return
+
+        if update_info.get("update_available"):
+            current = update_info.get("current_version", "unknown")
+            latest = update_info.get("latest_version", "unknown")
+            self.update_status_label.config(
+                text=f"🎉 Update available! {current} → {latest}",
+                foreground="green",
+            )
+            self.download_update_btn.config(state="normal")
+        else:
+            current = update_info.get("current_version", "unknown")
+            self.update_status_label.config(
+                text=f"✅ You have the latest version ({current})",
+                foreground="blue",
+            )
+
+        # Show release notes
+        notes = update_info.get("release_notes", "")
+        if notes:
+            self.release_notes_text.config(state=tk.NORMAL)
+            self.release_notes_text.delete(1.0, tk.END)
+
+            # Clean up markdown formatting for display
+            clean_notes = notes.replace("##", "").replace("**", "").replace("*", "")
+            self.release_notes_text.insert(tk.END, clean_notes)
+            self.release_notes_text.config(state=tk.DISABLED)
+        else:
+            self.release_notes_text.config(state=tk.NORMAL)
+            self.release_notes_text.delete(1.0, tk.END)
+            self.release_notes_text.insert(tk.END, "No release notes available.")
+            self.release_notes_text.config(state=tk.DISABLED)
+
+    def _handle_update_check_error(self, error_msg):
+        """Handle update check errors in main thread."""
+        self.check_updates_btn.config(text="Check for Updates", state="normal")
+        self.update_status_label.config(
+            text=f"Update check failed: {error_msg}", foreground="red"
+        )
+
+    def check_for_updates_silent(self):
+        """Silently check for updates on startup (using cache)."""
+
+        def check_in_thread():
+            try:
+                # Use cached results for startup check
+                update_info = check_for_updates(use_cache=True)
+
+                if update_info.get("update_available") and not update_info.get("error"):
+                    # Update available - update UI in main thread
+                    self.root.after(
+                        0, self._handle_silent_update_available, update_info
+                    )
+                else:
+                    # No update or error - just set default status
+                    self.root.after(0, self._handle_silent_no_update, update_info)
+            except Exception:
+                # Ignore errors in silent check
+                pass
+
+        threading.Thread(target=check_in_thread, daemon=True).start()
+
+    def _handle_silent_update_available(self, update_info):
+        """Handle silent update check when update is available."""
+        self.update_info = update_info
+        current = update_info.get("current_version", "unknown")
+        latest = update_info.get("latest_version", "unknown")
+
+        # Update the status in About tab
+        self.update_status_label.config(
+            text=f"🎉 Update available! {current} → {latest} (Click 'Check for Updates' for details)",
+            foreground="green",
+        )
+
+        # Show notification in status bar
+        self._set_status_message(
+            f"Update available: v{latest}. Check the About tab for details.",
+            "info",
+            duration=8000,
+        )
+
+    def _handle_silent_no_update(self, update_info):
+        """Handle silent update check when no update is available."""
+        if update_info.get("error"):
+            # Error occurred - show minimal info
+            self.update_status_label.config(
+                text="Click 'Check for Updates' to check for new versions",
+                foreground="gray",
+            )
+        else:
+            # Up to date
+            current = update_info.get("current_version", "unknown")
+            self.update_status_label.config(
+                text=f"Up to date (v{current})",
+                foreground="blue",
+            )
+
+    def download_update(self):
+        """Download and install update."""
+        if not self.update_info or not self.update_info.get("download_url"):
+            self._set_status_message("No update download URL available", "error")
+            return
+
+        download_url = self.update_info["download_url"]
+        latest_version = self.update_info.get("latest_version", "unknown")
+
+        self.download_update_btn.config(text="Downloading...", state="disabled")
+        self._set_status_message(f"Downloading update v{latest_version}...", "info")
+
+        def download_in_thread():
+            try:
+
+                def progress_callback(progress, downloaded, total):
+                    # Update status with progress
+                    mb_downloaded = downloaded / (1024 * 1024)
+                    mb_total = total / (1024 * 1024)
+                    self.root.after(
+                        0,
+                        lambda: self._set_status_message(
+                            f"Downloading: {progress:.1f}% ({mb_downloaded:.1f}/{mb_total:.1f} MB)",
+                            "info",
+                            duration=0,  # Don't auto-clear
+                        ),
+                    )
+
+                # Download the update
+                update_path = update_manager.download_update(
+                    download_url, progress_callback
+                )
+
+                if update_path:
+                    self.root.after(0, self._handle_download_success, update_path)
+                else:
+                    self.root.after(
+                        0, lambda: self._handle_download_error("Download failed")
+                    )
+
+            except Exception as e:
+                self.root.after(0, lambda: self._handle_download_error(str(e)))
+
+        threading.Thread(target=download_in_thread, daemon=True).start()
+
+    def _handle_download_success(self, update_path):
+        """Handle successful update download."""
+        self.download_update_btn.config(text="Download Update", state="normal")
+
+        # Show installation dialog
+        self._show_install_dialog(update_path)
+
+    def _handle_download_error(self, error_msg):
+        """Handle update download error."""
+        self.download_update_btn.config(text="Download Update", state="normal")
+        self._set_status_message(f"Download failed: {error_msg}", "error")
+
+    def _show_install_dialog(self, update_path):
+        """Show dialog to confirm update installation."""
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Install Update")
+        dialog.geometry("400x200")
+        dialog.transient(self.root)
+        dialog.grab_set()
+
+        # Center the dialog
+        dialog.geometry(
+            "+%d+%d" % (self.root.winfo_rootx() + 100, self.root.winfo_rooty() + 100)
+        )
+
+        ttk.Label(
+            dialog,
+            text="Update Downloaded Successfully!",
+            font=("TkDefaultFont", 12, "bold"),
+        ).pack(pady=15)
+
+        ttk.Label(
+            dialog,
+            text="The update has been downloaded and is ready to install.\nThis will close the current application and start the new version.",
+            justify="center",
+        ).pack(pady=10, padx=20)
+
+        # Buttons frame
+        btn_frame = ttk.Frame(dialog)
+        btn_frame.pack(pady=15)
+
+        def install_now():
+            dialog.destroy()
+            if update_manager.install_update(update_path):
+                self._set_status_message("Installing update...", "success")
+                # Give a moment for the message to display
+                self.root.after(1000, self.root.quit)
+            else:
+                self._set_status_message("Failed to install update", "error")
+
+        def install_later():
+            dialog.destroy()
+            self._set_status_message(
+                f"Update saved to {update_path}. Run manually to install.", "info"
+            )
+
+        ttk.Button(btn_frame, text="Install Now", command=install_now).pack(
+            side="left", padx=5
+        )
+        ttk.Button(btn_frame, text="Install Later", command=install_later).pack(
+            side="left", padx=5
+        )
 
     def run(self):
         self.root.mainloop()

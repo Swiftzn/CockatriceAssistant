@@ -333,15 +333,40 @@ class MoxfieldScraper:
             return None
 
 
+def clean_card_name(name: str) -> str:
+    """Clean card name for Cockatrice compatibility.
+
+    Handles dual-faced cards by taking the first name before '//'
+
+    Args:
+        name: Raw card name from Moxfield
+
+    Returns:
+        Cleaned card name suitable for Cockatrice
+    """
+    if not name:
+        return ""
+
+    # Handle dual-faced cards - take the first name before '//'
+    if "//" in name:
+        return name.split("//")[0].strip()
+
+    return name.strip()
+
+
 def convert_moxfield_to_cockatrice(moxfield_deck: MoxfieldDeck) -> CockatriceDeck:
     """Convert a MoxfieldDeck to a CockatriceDeck for .cod export."""
 
     def make_card_entries(card_list: List[Dict[str, Any]]) -> List[CardEntry]:
         entries = []
         for card in card_list:
+            # Clean the card name to handle dual-faced cards
+            raw_name = card.get("name", "")
+            clean_name = clean_card_name(raw_name)
+
             entry = CardEntry(
                 number=card.get("quantity", 1),
-                name=card.get("name", ""),
+                name=clean_name,
                 setShortName=card.get("set", ""),
                 collectorNumber=card.get("collector_number", ""),
                 uuid=card.get("scryfall_id", ""),
@@ -351,21 +376,29 @@ def convert_moxfield_to_cockatrice(moxfield_deck: MoxfieldDeck) -> CockatriceDec
 
     # Convert commanders to card entries for sideboard
     commander_entries = []
+    banner_card = ""
     for commander in moxfield_deck.commanders:
         if commander.strip():
+            # Clean the commander name to handle dual-faced commanders
+            commander_name = clean_card_name(commander)
             entry = CardEntry(
                 number=1,
-                name=commander.strip(),
+                name=commander_name,
                 setShortName="",
                 collectorNumber="",
                 uuid="",
             )
             commander_entries.append(entry)
 
+            # Set the first commander as the banner card
+            if not banner_card:
+                banner_card = commander_name
+
     cockatrice_deck = CockatriceDeck(
         deckname=moxfield_deck.name,
         zone_main=make_card_entries(moxfield_deck.mainboard),
         zone_side=commander_entries,  # Commanders go in sideboard
+        banner_card=banner_card,  # Set banner card to first commander
     )
 
     return cockatrice_deck

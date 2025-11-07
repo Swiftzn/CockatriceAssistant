@@ -7,9 +7,11 @@ import requests
 import zipfile
 import tempfile
 import shutil
+import json
+import time
 from pathlib import Path
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 
 
 @dataclass
@@ -23,42 +25,396 @@ class CockatriceTheme:
     author: str = ""
 
 
-"""CockatriceTheme(
-            name="MaterialDark",
-            download_url="https://github.com/user/material-dark-cockatrice/archive/refs/tags/v1.5.zip",
-            description="Material Design inspired dark theme with rounded corners and smooth animations",
-            version="1.5",
-            author="MaterialDesigner",
-        ),
-        CockatriceTheme(
-            name="RetroGaming",
-            download_url="https://github.com/retro/cockatrice-retro/archive/refs/tags/v3.0.zip",
-            description="Nostalgic 90s gaming aesthetic with pixel-perfect fonts and classic colors",
-            version="3.0",
-            author="RetroThemes",
-        ),
-        CockatriceTheme(
-            name="MinimalWhite",
-            download_url="https://github.com/minimal/white-cockatrice/archive/refs/tags/v1.2.zip",
-            description="Clean, minimal white theme perfect for streaming and content creation",
-            version="1.2",
-            author="MinimalDesign",
-        ),
-"""
+# Cache for GitHub release info to avoid repeated API calls
+_github_cache = {}
+_cache_duration = 300  # 5 minutes cache
+
+# Remote curated themes configuration
+REMOTE_THEMES_URL = (
+    "https://gist.githubusercontent.com/Swiftzn/ad3dbd7384da4162e5f8fbc58f223312/raw"
+)
+_remote_themes_cache = {}
+_remote_themes_cache_duration = 86400  # 24 hours cache for remote themes list
+
+
+def get_latest_github_release(
+    repo_owner: str, repo_name: str, use_cache: bool = True
+) -> Optional[dict]:
+    """Fetch the latest release information from a GitHub repository.
+
+    Args:
+        repo_owner: GitHub username/organization
+        repo_name: Repository name
+        use_cache: Whether to use cached results
+
+    Returns:
+        Dictionary with release information or None if failed
+    """
+    cache_key = f"{repo_owner}/{repo_name}"
+    current_time = time.time()
+
+    # Check cache first if enabled
+    if use_cache and cache_key in _github_cache:
+        cached_data, cache_time = _github_cache[cache_key]
+        if current_time - cache_time < _cache_duration:
+            print(f"Using cached release info for {cache_key}")
+            return cached_data
+
+    try:
+        api_url = (
+            f"https://api.github.com/repos/{repo_owner}/{repo_name}/releases/latest"
+        )
+        headers = {
+            "Accept": "application/vnd.github.v3+json",
+            "User-Agent": "CockatriceAssistant/1.0",
+        }
+
+        print(f"Fetching latest release info from: {api_url}")
+        response = requests.get(api_url, headers=headers, timeout=10)
+
+        if response.status_code == 200:
+            release_data = response.json()
+            result = {
+                "tag_name": release_data.get("tag_name", ""),
+                "name": release_data.get("name", ""),
+                "body": release_data.get("body", ""),
+                "published_at": release_data.get("published_at", ""),
+                "zipball_url": release_data.get("zipball_url", ""),
+                "tarball_url": release_data.get("tarball_url", ""),
+                "html_url": release_data.get("html_url", ""),
+            }
+
+            # Cache the result
+            _github_cache[cache_key] = (result, current_time)
+            return result
+        else:
+            print(f"Failed to fetch release info: HTTP {response.status_code}")
+
+            # Return cached data if available even if expired
+            if cache_key in _github_cache:
+                print("Falling back to cached data due to API error")
+                cached_data, _ = _github_cache[cache_key]
+                return cached_data
+            return None
+
+    except Exception as e:
+        print(f"Error fetching GitHub release info: {e}")
+
+        # Return cached data if available even if expired
+        if cache_key in _github_cache:
+            print("Falling back to cached data due to network error")
+            cached_data, _ = _github_cache[cache_key]
+            return cached_data
+        return None
+
+
+def clear_github_cache():
+    """Clear the GitHub API cache to force fresh requests."""
+    global _github_cache
+    _github_cache.clear()
+    print("GitHub release cache cleared")
+
+
+def clear_remote_themes_cache():
+    """Clear the remote themes cache to force fresh requests."""
+    global _remote_themes_cache
+    _remote_themes_cache.clear()
+    print("Remote themes cache cleared")
+
+
+def get_remote_curated_themes_list() -> Optional[List[dict]]:
+    """Fetch the curated themes list from remote JSON.
+
+    Returns:
+        List of theme definitions or None if failed
+    """
+    cache_key = "remote_themes"
+    current_time = time.time()
+
+    # Check cache first
+    if cache_key in _remote_themes_cache:
+        cached_data, cache_time = _remote_themes_cache[cache_key]
+        if current_time - cache_time < _remote_themes_cache_duration:
+            print("Using cached remote themes list")
+            return cached_data
+
+    try:
+        print(f"Fetching remote curated themes from: {REMOTE_THEMES_URL}")
+        headers = {
+            "User-Agent": "CockatriceAssistant/1.0",
+            "Accept": "application/json",
+        }
+
+        response = requests.get(REMOTE_THEMES_URL, headers=headers, timeout=10)
+
+        if response.status_code == 200:
+            themes_data = response.json()
+
+            # Validate the JSON structure
+            if isinstance(themes_data, dict) and "themes" in themes_data:
+                themes_list = themes_data["themes"]
+                if isinstance(themes_list, list):
+                    print(f"Successfully fetched {len(themes_list)} remote themes")
+
+                    # Cache the result
+                    _remote_themes_cache[cache_key] = (themes_list, current_time)
+                    return themes_list
+                else:
+                    print("Invalid remote themes format: 'themes' is not a list")
+            else:
+                print("Invalid remote themes format: missing 'themes' key")
+
+        else:
+            print(f"Failed to fetch remote themes: HTTP {response.status_code}")
+
+        # Return cached data if available even if expired
+        if cache_key in _remote_themes_cache:
+            print("Falling back to cached remote themes due to fetch error")
+            cached_data, _ = _remote_themes_cache[cache_key]
+            return cached_data
+
+        return None
+
+    except Exception as e:
+        print(f"Error fetching remote curated themes: {e}")
+
+        # Return cached data if available even if expired
+        if cache_key in _remote_themes_cache:
+            print("Falling back to cached remote themes due to network error")
+            cached_data, _ = _remote_themes_cache[cache_key]
+            return cached_data
+
+        return None
+
+
+def check_themes_list_update() -> dict:
+    """Check if there's an update available for the curated themes list.
+
+    Returns:
+        Dictionary with update information
+    """
+    result = {
+        "update_available": False,
+        "current_version": "unknown",
+        "latest_version": "unknown",
+        "message": "",
+    }
+
+    try:
+        # Get current cached version info if available
+        cache_key = "remote_themes"
+        current_version = "0.0.0"  # Default if no cache
+
+        if cache_key in _remote_themes_cache:
+            cached_data, cache_time = _remote_themes_cache[cache_key]
+            # Try to extract version from cached data
+            if isinstance(cached_data, list) and len(cached_data) > 0:
+                # Check if there's version metadata in the first theme or elsewhere
+                current_version = "cached"
+
+        # Force fetch latest remote themes (ignore cache)
+        print("Checking for themes list updates...")
+        headers = {
+            "User-Agent": "CockatriceAssistant/1.0",
+            "Accept": "application/json",
+        }
+
+        response = requests.get(REMOTE_THEMES_URL, headers=headers, timeout=10)
+
+        if response.status_code == 200:
+            themes_data = response.json()
+
+            if isinstance(themes_data, dict):
+                latest_version = themes_data.get("version", "unknown")
+                theme_count = len(themes_data.get("themes", []))
+
+                result["current_version"] = current_version
+                result["latest_version"] = latest_version
+
+                # Simple check - if we don't have the exact same data, consider it an update
+                if cache_key not in _remote_themes_cache:
+                    result["update_available"] = True
+                    result["message"] = (
+                        f"New themes list available with {theme_count} themes"
+                    )
+                else:
+                    cached_data, _ = _remote_themes_cache[cache_key]
+                    if len(cached_data) != theme_count:
+                        result["update_available"] = True
+                        result["message"] = (
+                            f"Updated themes list available ({theme_count} themes)"
+                        )
+                    else:
+                        result["message"] = (
+                            f"Themes list is up to date ({theme_count} themes)"
+                        )
+            else:
+                result["message"] = "Invalid remote themes format"
+        else:
+            result["message"] = (
+                f"Failed to check for updates: HTTP {response.status_code}"
+            )
+
+    except Exception as e:
+        result["message"] = f"Error checking for updates: {e}"
+
+    return result
+
+
+def create_theme_from_definition(theme_def: dict) -> Optional[CockatriceTheme]:
+    """Create a CockatriceTheme from a remote theme definition.
+
+    Args:
+        theme_def: Dictionary containing theme definition
+
+    Returns:
+        CockatriceTheme object or None if creation failed
+    """
+    try:
+        # Validate required fields
+        required_fields = ["name", "repo_owner", "repo_name", "author"]
+        for field in required_fields:
+            if field not in theme_def:
+                print(f"Missing required field '{field}' in theme definition")
+                return None
+
+        # Extract theme information
+        theme_name = theme_def["name"]
+        repo_owner = theme_def["repo_owner"]
+        repo_name = theme_def["repo_name"]
+        author = theme_def["author"]
+        fallback_version = theme_def.get("fallback_version", "1.0")
+        fallback_description = theme_def.get("description", "A Cockatrice theme")
+
+        print(f"Creating theme: {theme_name}")
+
+        # Use the existing create_github_theme function
+        return create_github_theme(
+            repo_owner=repo_owner,
+            repo_name=repo_name,
+            theme_name=theme_name,
+            author=author,
+            fallback_version=fallback_version,
+            fallback_description=fallback_description,
+        )
+
+    except Exception as e:
+        print(f"Error creating theme from definition: {e}")
+        return None
+
+
+def create_github_theme(
+    repo_owner: str,
+    repo_name: str,
+    theme_name: str,
+    author: str,
+    fallback_version: str = "1.0",
+    fallback_description: str = "A Cockatrice theme",
+) -> CockatriceTheme:
+    """Create a theme from a GitHub repository with automatic version detection.
+
+    Args:
+        repo_owner: GitHub username/organization
+        repo_name: Repository name
+        theme_name: Display name for the theme
+        author: Theme author name
+        fallback_version: Version to use if API fails
+        fallback_description: Description to use if API fails or no description available
+
+    Returns:
+        CockatriceTheme object with latest or fallback information
+    """
+    # Fallback theme info
+    fallback_theme = CockatriceTheme(
+        name=theme_name,
+        download_url=f"https://github.com/{repo_owner}/{repo_name}/archive/refs/tags/{fallback_version}.zip",
+        description=fallback_description,
+        version=fallback_version,
+        author=author,
+    )
+
+    try:
+        release_info = get_latest_github_release(repo_owner, repo_name)
+
+        if release_info and release_info.get("tag_name"):
+            version = release_info["tag_name"].lstrip("v")
+            download_url = f"https://github.com/{repo_owner}/{repo_name}/archive/refs/tags/{release_info['tag_name']}.zip"
+
+            # Use JSON description if provided, otherwise use GitHub release description
+            if fallback_description and fallback_description != "A Cockatrice theme":
+                description = fallback_description
+            else:
+                description = release_info.get("body", "").strip()
+                if description:
+                    # Clean up markdown
+                    description = (
+                        description.replace("#", "").replace("*", "").replace("_", "")
+                    )
+                    if len(description) > 150:
+                        description = description[:147] + "..."
+                else:
+                    description = fallback_description
+
+            print(f"Using {theme_name} latest release: {version}")
+
+            return CockatriceTheme(
+                name=theme_name,
+                download_url=download_url,
+                description=description,
+                version=version,
+                author=author,
+            )
+        else:
+            print(
+                f"No valid release info found for {theme_name}, using fallback version"
+            )
+            return fallback_theme
+
+    except Exception as e:
+        print(f"Error creating {theme_name} theme: {e}")
+        return fallback_theme
 
 
 def get_curated_themes() -> List[CockatriceTheme]:
-    """Return a list of curated Cockatrice themes."""
-    return [
-        CockatriceTheme(
-            name="DarkMingo",
-            download_url="https://github.com/mingomongo/DarkMingo-Theme-for-Cockatrice/archive/refs/tags/1.3.zip",
-            description="A dark theme for Cockatrice with improved visibility and modern design",
-            version="1.3",
-            author="mingomongo",
-        ),
-        # Add more themes here in the future
-    ]
+    """Return a list of curated Cockatrice themes from remote source with latest versions from GitHub."""
+    themes = []
+
+    # Try to fetch remote curated themes list
+    remote_themes = get_remote_curated_themes_list()
+
+    if remote_themes:
+        print(f"Processing {len(remote_themes)} remote theme definitions")
+
+        for theme_def in remote_themes:
+            try:
+                theme = create_theme_from_definition(theme_def)
+                if theme:
+                    themes.append(theme)
+                else:
+                    print(
+                        f"Failed to create theme from definition: {theme_def.get('name', 'Unknown')}"
+                    )
+            except Exception as e:
+                print(f"Error processing theme definition: {e}")
+    else:
+        # Fallback to hardcoded themes if remote fetch fails
+        print("Remote themes unavailable, using fallback themes")
+
+        try:
+            darkmingo_theme = create_github_theme(
+                repo_owner="mingomongo",
+                repo_name="DarkMingo-Theme-for-Cockatrice",
+                theme_name="DarkMingo",
+                author="mingomongo",
+                fallback_version="1.3",
+                fallback_description="A dark theme for Cockatrice with improved visibility and modern design",
+            )
+            themes.append(darkmingo_theme)
+        except Exception as e:
+            print(f"Error adding fallback DarkMingo theme: {e}")
+
+    print(f"Successfully loaded {len(themes)} curated themes")
+    return themes
 
 
 def download_template(url: str, dest_folder: str) -> Path:
