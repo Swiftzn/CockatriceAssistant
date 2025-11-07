@@ -25,6 +25,10 @@ MANIFEST
 *.manifest
 *.spec
 
+# Build outputs
+release/
+*.exe
+
 # Virtual Environment
 .venv/
 venv/

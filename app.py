@@ -105,7 +105,7 @@ def get_cockatrice_download_info():
 class MainWindow:
     def __init__(self):
         self.root = tk.Tk()
-        self.root.title("Cockatrice Assistant")
+        self.root.title(f"Cockatrice Assistant v{get_current_version()}")
         self.root.geometry("1000x700")
 
         # Create notebook for tabs
@@ -902,7 +902,7 @@ Click below to visit the official Cockatrice website where you can:
         """Show dialog to confirm update installation."""
         dialog = tk.Toplevel(self.root)
         dialog.title("Install Update")
-        dialog.geometry("400x200")
+        dialog.geometry("400x250")
         dialog.transient(self.root)
         dialog.grab_set()
 
@@ -913,41 +913,82 @@ Click below to visit the official Cockatrice website where you can:
 
         ttk.Label(
             dialog,
-            text="Update Downloaded Successfully!",
+            text="Update Ready to Install",
             font=("TkDefaultFont", 12, "bold"),
         ).pack(pady=15)
 
+        # Get update info
+        latest_version = self.update_info.get("latest_version", "unknown")
+        current_version = get_current_version()
+
+        info_text = f"""Update: v{current_version} → v{latest_version}
+
+The update has been downloaded successfully and is ready to install.
+
+This will:
+• Replace the current application with the new version
+• Close the current application
+• Start the updated application automatically"""
+
         ttk.Label(
             dialog,
-            text="The update has been downloaded and is ready to install.\nThis will close the current application and start the new version.",
+            text=info_text,
             justify="center",
+            font=("TkDefaultFont", 9),
         ).pack(pady=10, padx=20)
+
+        # Show downloaded file info
+        file_size_mb = update_path.stat().st_size / (1024 * 1024)
+        file_info = f"Downloaded: {file_size_mb:.1f} MB"
+        ttk.Label(
+            dialog,
+            text=file_info,
+            font=("TkDefaultFont", 8),
+            foreground="gray",
+        ).pack(pady=(0, 15))
 
         # Buttons frame
         btn_frame = ttk.Frame(dialog)
-        btn_frame.pack(pady=15)
+        btn_frame.pack(pady=10)
 
         def install_now():
             dialog.destroy()
-            if update_manager.install_update(update_path):
+            # Get the current executable directory for installation
+            current_exe_dir = self._get_current_exe_directory()
+            if update_manager.install_update(update_path, current_exe_dir):
                 self._set_status_message("Installing update...", "success")
                 # Give a moment for the message to display
-                self.root.after(1000, self.root.quit)
+                self.root.after(1500, self.root.quit)
             else:
                 self._set_status_message("Failed to install update", "error")
 
-        def install_later():
+        def cancel_install():
             dialog.destroy()
             self._set_status_message(
-                f"Update saved to {update_path}. Run manually to install.", "info"
+                "Update cancelled. File saved in temporary location.", "info"
             )
 
-        ttk.Button(btn_frame, text="Install Now", command=install_now).pack(
-            side="left", padx=5
+        ttk.Button(
+            btn_frame, text="Install Update", command=install_now, width=15
+        ).pack(side="left", padx=10)
+
+        ttk.Button(btn_frame, text="Cancel", command=cancel_install, width=15).pack(
+            side="left", padx=10
         )
-        ttk.Button(btn_frame, text="Install Later", command=install_later).pack(
-            side="left", padx=5
-        )
+
+    def _get_current_exe_directory(self):
+        """Get the directory where the current executable is located."""
+        try:
+            import sys
+
+            if getattr(sys, "frozen", False):
+                # Running as PyInstaller executable
+                return Path(sys.executable).parent
+            else:
+                # Running as Python script - use current directory
+                return Path.cwd()
+        except Exception:
+            return Path.cwd()
 
     def run(self):
         self.root.mainloop()

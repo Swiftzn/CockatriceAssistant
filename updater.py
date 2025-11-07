@@ -198,11 +198,14 @@ class UpdateManager:
             print(f"Download failed: {e}")
             return None
 
-    def install_update(self, update_path: Path) -> bool:
-        """Install the downloaded update.
+    def install_update(
+        self, update_path: Path, target_directory: Optional[Path] = None
+    ) -> bool:
+        """Install the downloaded update by replacing current exe.
 
         Args:
             update_path: Path to the downloaded update executable
+            target_directory: Directory to install to (where current exe is located)
 
         Returns:
             True if installation was initiated successfully
@@ -210,15 +213,88 @@ class UpdateManager:
         try:
             print(f"Installing update from: {update_path}")
 
-            # Start the new executable and exit current application
-            subprocess.Popen([str(update_path)], shell=True)
+            if target_directory and target_directory.is_dir():
+                # Install to the same directory as current exe
+                install_path = target_directory / update_path.name
+                current_exe = self._get_current_executable_path()
 
-            print("Update installation initiated. Application will restart.")
-            return True
+                print(f"Installing to: {install_path}")
+                self._create_simple_update_script(
+                    update_path, install_path, current_exe
+                )
+                return True
+            else:
+                # Fallback: just run the temp file
+                print("No target directory specified, running from temp location")
+                subprocess.Popen([str(update_path)], shell=True)
+                return True
 
         except Exception as e:
             print(f"Installation failed: {e}")
             return False
+
+    def _get_current_executable_path(self) -> Optional[Path]:
+        """Get the path to the current executable."""
+        try:
+            import sys
+
+            if getattr(sys, "frozen", False):
+                # Running as PyInstaller executable
+                return Path(sys.executable)
+            else:
+                # Running as Python script - return None to use temp method
+                return None
+        except Exception:
+            return None
+
+    def _create_update_script(
+        self, source_path: Path, target_path: Path, current_exe: Optional[Path]
+    ) -> None:
+        """Create a batch script to handle the automatic update installation."""
+        try:
+            script_content = f"""@echo off
+echo Installing Cockatrice Assistant Update...
+timeout /t 2 /nobreak >nul
+
+REM Wait for current application to close
+:wait_loop
+tasklist /FI "IMAGENAME eq {current_exe.name if current_exe else 'CockatriceAssistant*.exe'}" 2>NUL | find /I /N "{current_exe.name if current_exe else 'CockatriceAssistant'}" >NUL
+if "%ERRORLEVEL%"=="0" (
+    timeout /t 1 /nobreak >nul
+    goto wait_loop
+)
+
+REM Replace current exe with new version
+echo Installing new version...
+copy /Y "{source_path}" "{target_path}" >nul
+
+REM Start new version
+echo Starting updated application...
+start "" "{target_path}"
+
+REM Clean up
+timeout /t 2 /nobreak >nul
+del "{source_path}" >nul 2>nul
+del "%~f0" >nul 2>nul
+"""
+
+            # Create update script in temp directory
+            script_path = Path(tempfile.gettempdir()) / "cockatrice_update.bat"
+            with open(script_path, "w") as f:
+                f.write(script_content)
+
+            # Run the update script
+            subprocess.Popen(
+                [str(script_path)],
+                shell=True,
+                creationflags=subprocess.CREATE_NO_WINDOW,
+            )
+            print(f"Update script created: {script_path}")
+
+        except Exception as e:
+            print(f"Failed to create update script: {e}")
+            # Fallback to simple launch
+            subprocess.Popen([str(source_path)], shell=True)
 
     def open_releases_page(self) -> None:
         """Open the GitHub releases page in the default browser."""
