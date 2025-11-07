@@ -1,8 +1,8 @@
 """Version management for Cockatrice Assistant."""
 
 # Application version - update this when releasing new versions
-__version__ = "1.0.1"
-__version_info__ = (1, 0, 1)
+__version__ = "1.0.2"
+__version_info__ = (1, 0, 2)
 
 # GitHub repository information for update checking
 GITHUB_REPO_OWNER = "Swiftzn"
