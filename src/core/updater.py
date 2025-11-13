@@ -227,9 +227,7 @@ class UpdateManager:
                 current_exe = self._get_current_executable_path()
 
                 print(f"Installing to: {install_path}")
-                self._create_simple_update_script(
-                    update_path, install_path, current_exe
-                )
+                self._create_update_script(update_path, install_path, current_exe)
                 return True
             else:
                 # Fallback: just run the temp file
