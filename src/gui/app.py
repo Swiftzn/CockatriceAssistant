@@ -32,7 +32,8 @@ from utils.templates import (
     get_installed_theme_info,
     clear_remote_themes_cache,
 )
-from importers.moxfield_scraper import MoxfieldScraper, convert_moxfield_to_cockatrice
+from importers.mtgjson_scraper import MTGJsonScraper
+from utils.deck_filters import AdvancedDeckFilter, DeckFilters
 import threading
 from core.updater import update_manager, check_for_updates, get_current_version
 from core.version import APP_NAME, APP_DESCRIPTION, GITHUB_REPO_URL
@@ -180,11 +181,6 @@ class MainWindow:
         btn_frame = ttk.Frame(deck_frame)
         btn_frame.pack(fill=tk.X, padx=5, pady=5)
 
-        self.update_list_btn = ttk.Button(
-            btn_frame, text="Update List", command=self.update_deck_list
-        )
-        self.update_list_btn.pack(side=tk.LEFT, padx=(0, 5))
-
         self.import_url_btn = ttk.Button(
             btn_frame, text="Import from URL", command=self.import_from_url
         )
@@ -203,6 +199,47 @@ class MainWindow:
             btn_frame, text="Import Selected", command=self.export_selected
         )
         self.export_btn.pack(side=tk.LEFT)
+
+        # Filtering frame
+        filter_frame = ttk.LabelFrame(deck_frame, text="Filters")
+        filter_frame.pack(fill=tk.X, padx=5, pady=5)
+
+        # Format filter frame
+        source_frame = ttk.Frame(filter_frame)
+        source_frame.pack(fill=tk.X, padx=5, pady=2)
+
+        # Format filter
+        ttk.Label(source_frame, text="Format:").pack(side=tk.LEFT)
+        self.format_var = tk.StringVar(value="All Formats")
+        self.format_combo = ttk.Combobox(
+            source_frame,
+            textvariable=self.format_var,
+            values=["All Formats"],  # Will be populated later
+            state="readonly",
+            width=20,
+        )
+        self.format_combo.pack(side=tk.LEFT, padx=(5, 15))
+        self.format_combo.bind("<<ComboboxSelected>>", self.on_filter_changed)
+
+        # Search functionality
+        ttk.Label(source_frame, text="Search:").pack(side=tk.LEFT)
+        self.search_var = tk.StringVar()
+        self.search_entry = ttk.Entry(
+            source_frame,
+            textvariable=self.search_var,
+            width=25,
+        )
+        self.search_entry.pack(side=tk.LEFT, padx=(5, 10))
+        self.search_entry.bind("<KeyRelease>", self.on_search_changed)
+
+        # Clear search button
+        self.clear_search_btn = ttk.Button(
+            source_frame,
+            text="Clear",
+            command=self.clear_search,
+            width=8,
+        )
+        self.clear_search_btn.pack(side=tk.LEFT, padx=(5, 0))
 
         # Save path frame
         save_frame = ttk.Frame(deck_frame)
@@ -249,9 +286,33 @@ class MainWindow:
         list_frame = ttk.Frame(deck_frame)
         list_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-        self.tree = ttk.Treeview(list_frame, columns=("type",), show="tree headings")
-        self.tree.heading("#0", text="Deck Name")
-        self.tree.heading("type", text="Type")
+        self.tree = ttk.Treeview(
+            list_frame,
+            columns=("deck_type", "release_date", "format"),
+            show="tree headings",
+        )
+        self.tree.heading(
+            "#0", text="Deck Name", command=lambda: self.sort_column("#0", False)
+        )
+        self.tree.heading(
+            "deck_type",
+            text="Deck Type",
+            command=lambda: self.sort_column("deck_type", False),
+        )
+        self.tree.heading(
+            "release_date",
+            text="Release Date",
+            command=lambda: self.sort_column("release_date", False),
+        )
+        self.tree.heading(
+            "format", text="Format", command=lambda: self.sort_column("format", False)
+        )
+
+        # Set column widths
+        self.tree.column("#0", width=400, minwidth=250)
+        self.tree.column("deck_type", width=150, minwidth=120)
+        self.tree.column("release_date", width=120, minwidth=100)
+        self.tree.column("format", width=120, minwidth=100)
 
         scrollbar = ttk.Scrollbar(
             list_frame, orient=tk.VERTICAL, command=self.tree.yview
@@ -477,8 +538,10 @@ class MainWindow:
         self.status_bar.pack(side=tk.BOTTOM, fill=tk.X)
 
         self.card_items = []  # Track card items for selection
-        self.moxfield_scraper = MoxfieldScraper()
-        self.precon_decks = []  # List of DeckCheck precon decks
+        self.mtgjson_scraper = MTGJsonScraper()
+        self.deck_filters = DeckFilters()
+        self.precon_decks = []  # List of MTGJSON precon decks
+        self.sort_reverse = {}  # Track sort direction for each column
 
         # Check Cockatrice installation on startup
         self.root.after(100, self.check_cockatrice_installation)
@@ -486,65 +549,311 @@ class MainWindow:
         # Load cached decks on startup
         self.root.after(200, self.load_initial_decks)
 
+    def sort_column(self, column, reverse):
+        """Sort TreeView contents by the specified column."""
+        # Get all items with their values
+        items = [
+            (
+                (
+                    self.tree.set(k, column)
+                    if column != "#0"
+                    else self.tree.item(k, "text")
+                ),
+                k,
+            )
+            for k in self.tree.get_children("")
+        ]
+
+        # Handle sorting for different column types
+        if column == "release_date":
+            # Sort dates properly
+            items.sort(key=lambda x: x[0] if x[0] else "", reverse=reverse)
+        else:
+            # Sort text normally
+            items.sort(key=lambda x: x[0].lower() if x[0] else "", reverse=reverse)
+
+        # Rearrange items in sorted positions
+        for index, (val, k) in enumerate(items):
+            self.tree.move(k, "", index)
+
+        # Update sort direction for next click
+        self.sort_reverse[column] = not reverse
+
+        # Update heading to show sort direction
+        for col in ["#0", "deck_type", "release_date", "format"]:
+            if col == column:
+                direction = " ↓" if reverse else " ↑"
+                current_text = self.tree.heading(col)["text"]
+                # Remove existing arrows
+                clean_text = current_text.replace(" ↑", "").replace(" ↓", "")
+                self.tree.heading(col, text=clean_text + direction)
+                # Update command for next click
+                self.tree.heading(
+                    col,
+                    command=lambda c=col: self.sort_column(
+                        c, self.sort_reverse.get(c, False)
+                    ),
+                )
+            else:
+                # Remove arrows from other columns
+                current_text = self.tree.heading(col)["text"]
+                clean_text = current_text.replace(" ↑", "").replace(" ↓", "")
+                self.tree.heading(col, text=clean_text)
+                self.tree.heading(col, command=lambda c=col: self.sort_column(c, False))
+
+    def on_filter_changed(self, event=None):
+        """Handle filter changes for MTGJSON."""
+        self.apply_mtgjson_filters()
+
+    def on_search_changed(self, event=None):
+        """Handle search text changes."""
+        self.apply_mtgjson_filters()
+
+    def clear_search(self):
+        """Clear the search field and refresh the list."""
+        self.search_var.set("")
+        self.apply_mtgjson_filters()
+
+    def update_mtgjson_formats(self):
+        """Update format combobox with available MTGJSON formats."""
+        try:
+            # Get formats from the currently loaded decks
+            if not self.precon_decks:
+                return
+
+            formats = {}
+            for deck in self.precon_decks:
+                format_name = self.deck_filters.infer_format(deck._data)
+                formats[format_name] = formats.get(format_name, 0) + 1
+
+            # Sort formats by popularity (most decks first)
+            sorted_formats = sorted(formats.items(), key=lambda x: x[1], reverse=True)
+            format_names = [f[0] for f in sorted_formats]
+
+            # Add "All Formats" option
+            values = ["All Formats"] + format_names
+            self.format_combo["values"] = values
+        except Exception as e:
+            print(f"Error updating formats: {e}")
+
+    def apply_mtgjson_filters(self):
+        """Apply current filters to MTGJSON deck list."""
+        if not self.precon_decks:
+            return
+
+        try:
+            # Start with all precon decks (already excludes Secret Lair Drop)
+            filtered_decks = self.precon_decks.copy()
+
+            # Filter by format if specified
+            format_filter = self.format_var.get()
+            if format_filter != "All Formats":
+                filtered_decks = [
+                    deck
+                    for deck in filtered_decks
+                    if self.deck_filters.infer_format(deck._data) == format_filter
+                ]
+
+            # Filter by search term if specified
+            search_term = self.search_var.get().strip().lower()
+            if search_term:
+                filtered_decks = [
+                    deck
+                    for deck in filtered_decks
+                    if search_term in getattr(deck, "name", "").lower()
+                    or search_term in getattr(deck, "code", "").lower()
+                    or search_term in getattr(deck, "type", "").lower()
+                ]
+
+            # Update display
+            self._display_filtered_decks(filtered_decks)
+
+        except Exception as e:
+            self.status_bar.config(text=f"Error applying filters: {e}")
+
+    def _update_mtgjson_list(self, decks):
+        """Update UI with filtered MTGJSON decks."""
+        # Filter out Secret Lair Drop decks by default
+        filtered_decks = [
+            deck for deck in decks if getattr(deck, "type", "") != "Secret Lair Drop"
+        ]
+
+        # Store decks and sort by release date (newest first)
+        self.precon_decks = sorted(
+            filtered_decks, key=lambda x: getattr(x, "releaseDate", ""), reverse=True
+        )
+
+        # Clear existing tree
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+        self.card_items.clear()
+
+        # Add MTGJSON decks to tree
+        for i, deck in enumerate(self.precon_decks):
+            deck_name = getattr(deck, "name", "Unknown Deck")
+            deck_type = getattr(deck, "type", "Unknown")
+            release_date = getattr(deck, "releaseDate", "")
+            code = getattr(deck, "code", "")
+
+            # Infer format
+            format_name = self.deck_filters.infer_format(deck._data)
+
+            # Build display text
+            deck_text = deck_name
+            if code:
+                deck_text += f" ({code})"
+
+            item_id = self.tree.insert(
+                "",
+                "end",
+                text=deck_text,
+                values=(deck_type, release_date, format_name),
+            )
+            self.card_items.append((item_id, "precon", i))
+
+        self._reset_precon_buttons()
+        count = len(decks)
+        self.status_bar.config(
+            text=f"Loaded {count} MTGJSON decks with current filters"
+        )
+
+        # Update formats dropdown after loading decks
+        self.update_mtgjson_formats()
+
         # Check for updates on startup (silent check using cache)
         self.root.after(500, self.check_for_updates_silent)
 
     def load_initial_decks(self):
-        """Load decks from cache on app startup."""
+        """Load decks on app startup, updating cache only if needed."""
+        self.import_url_btn.config(state="disabled")
 
         def load_in_thread():
             try:
-                # Try to load from cache first (don't force refresh)
-                decks = self.moxfield_scraper.fetch_all_precons(force_refresh=False)
+                # Check if cache needs updating
+                metadata = self.mtgjson_scraper._load_cache_metadata()
+                cache_is_valid = self.mtgjson_scraper._is_cache_valid(
+                    metadata.get("last_decklist_fetch", 0)
+                )
+
+                if cache_is_valid:
+                    # Cache is still fresh, use it
+                    self.root.after(
+                        0, lambda: self.status_bar.config(text="Loading from cache...")
+                    )
+                    decks = self.mtgjson_scraper.fetch_deck_list(force_refresh=False)
+                    cache_age_hours = (
+                        __import__("time").time()
+                        - metadata.get("last_decklist_fetch", 0)
+                    ) / 3600
+                    status_msg = f"Loaded {len(decks)} decks from cache (cache age: {cache_age_hours:.1f}h)"
+                else:
+                    # Cache is stale or missing, update it
+                    self.root.after(
+                        0, lambda: self.status_bar.config(text="Updating deck list...")
+                    )
+                    decks = self.mtgjson_scraper.fetch_deck_list(force_refresh=True)
+                    status_msg = f"Updated and loaded {len(decks)} decks from MTGJSON"
+
                 if decks:
                     # Update UI in main thread
-                    self.root.after(0, self._update_precon_list_silent, decks)
+                    self.root.after(0, lambda: self._update_mtgjson_list(decks))
+                    self.root.after(100, self.update_mtgjson_formats)
+                    self.root.after(0, lambda: self.status_bar.config(text=status_msg))
                 else:
-                    # No cache available
+                    # No decks loaded - this shouldn't happen with valid cache
                     self.root.after(
                         0,
                         lambda: self._set_status_message(
-                            "No cached decks found. Click 'Update List' to fetch deck data.",
-                            "info",
+                            "Failed to load deck data. Please check your internet connection.",
+                            "error",
                         ),
                     )
+
             except Exception as e:
-                # Error loading cache
-                self.root.after(
-                    0,
-                    lambda: self._set_status_message(
-                        f"Could not load cached decks: {e}. Click 'Update List' to fetch.",
-                        "warning",
-                    ),
-                )
+                # Error occurred - try to fall back to cache
+                try:
+                    cached_decks = self.mtgjson_scraper.fetch_deck_list(
+                        force_refresh=False
+                    )
+                    if cached_decks:
+                        self.root.after(
+                            0, lambda: self._update_mtgjson_list(cached_decks)
+                        )
+                        self.root.after(
+                            0,
+                            lambda: self._set_status_message(
+                                f"Using cached data due to error: {e}",
+                                "warning",
+                            ),
+                        )
+                    else:
+                        self.root.after(
+                            0,
+                            lambda: self._set_status_message(
+                                f"Could not load decks: {e}",
+                                "error",
+                            ),
+                        )
+                except Exception as cache_error:
+                    self.root.after(
+                        0,
+                        lambda: self._set_status_message(
+                            f"Failed to load any deck data: {cache_error}",
+                            "error",
+                        ),
+                    )
+            finally:
+                # Re-enable buttons
+                self.root.after(0, lambda: self.import_url_btn.config(state="normal"))
 
         threading.Thread(target=load_in_thread, daemon=True).start()
 
-    def update_deck_list(self):
-        """Update the deck list by fetching and refreshing cache."""
-        self.update_list_btn.config(text="Updating...", state="disabled")
-        self.import_url_btn.config(state="disabled")
-        self.status_bar.config(text="Updating deck list...")
+    def _display_filtered_decks(self, decks):
+        """Display a filtered list of decks in the TreeView."""
+        # Clear existing tree
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+        self.card_items.clear()
 
-        def update_in_thread():
-            try:
-                # Force refresh to get latest data
-                decks = self.moxfield_scraper.fetch_all_precons(force_refresh=True)
-                # Update UI in main thread
-                self.root.after(0, self._update_precon_list, decks)
-            except Exception as e:
-                self.root.after(
-                    0,
-                    lambda: self._set_status_message(
-                        f"Error updating deck list: {e}", "error"
-                    ),
-                )
-                self.root.after(
-                    0,
-                    lambda: self._reset_update_buttons(),
-                )
+        # Add filtered decks to tree
+        for i, deck in enumerate(decks):
+            deck_name = getattr(deck, "name", "Unknown Deck")
+            deck_type = getattr(deck, "type", "Unknown")
+            release_date = getattr(deck, "releaseDate", "")
+            code = getattr(deck, "code", "")
 
-        threading.Thread(target=update_in_thread, daemon=True).start()
+            # Infer format
+            format_name = self.deck_filters.infer_format(deck._data)
+
+            # Build display text
+            deck_text = deck_name
+            if code:
+                deck_text += f" ({code})"
+
+            item_id = self.tree.insert(
+                "",
+                "end",
+                text=deck_text,
+                values=(deck_type, release_date, format_name),
+            )
+            # Find the original index in precon_decks for this deck
+            original_index = next(
+                (
+                    j
+                    for j, original_deck in enumerate(self.precon_decks)
+                    if original_deck == deck
+                ),
+                i,
+            )
+            self.card_items.append((item_id, "precon", original_index))
+
+        self._reset_precon_buttons()
+        count = len(decks)
+        total_count = len(self.precon_decks)
+        if count == total_count:
+            self.status_bar.config(text=f"Showing all {count} decks")
+        else:
+            self.status_bar.config(text=f"Showing {count} of {total_count} decks")
 
     def import_from_url(self):
         """Import a deck from any supported deck list website."""
@@ -792,7 +1101,6 @@ Click below to visit the official Cockatrice website where you can:
 
     def _reset_update_buttons(self):
         """Reset update buttons to normal state."""
-        self.update_list_btn.config(text="Update List", state="normal")
         self.import_url_btn.config(state="normal")
 
     def _reset_precon_buttons(self):
@@ -802,7 +1110,7 @@ Click below to visit the official Cockatrice website where you can:
     def _update_cache_status(self):
         """Update the cache status display."""
         try:
-            cache_file = self.moxfield_scraper.cache_file
+            cache_file = self.mtgjson_scraper.decklist_cache
             if cache_file.exists():
                 from datetime import datetime
 
@@ -1120,74 +1428,11 @@ This will:
             self.save_path.delete(0, tk.END)
             self.save_path.insert(0, path)
 
-    def _update_precon_list(self, decks):
-        """Update the UI with loaded precon decks."""
-        self.precon_decks = decks
-
-        # Clear existing tree
-        for item in self.tree.get_children():
-            self.tree.delete(item)
-        self.card_items.clear()
-
-        # Add precon decks to tree with commander info
-        for i, deck in enumerate(decks):
-            # Build deck display text with optional components
-            deck_text = deck.name
-
-            # Add commanders if available
-            if deck.commanders:
-                commanders_str = ", ".join(deck.commanders)
-                deck_text += f" [{commanders_str}]"
-
-            # Add year if available
-            if deck.year:
-                deck_text += f" ({deck.year})"
-
-            item_id = self.tree.insert("", "end", text=deck_text, values=("precon",))
-            self.card_items.append((item_id, "precon", i))
-
-        self._reset_precon_buttons()
-        self._set_status_message(
-            f"Successfully loaded {len(decks)} precon decks!", "success"
-        )
-
-    def _update_precon_list_silent(self, decks):
-        """Update the UI with loaded precon decks without showing message box."""
-        self.precon_decks = decks
-
-        # Clear existing tree
-        for item in self.tree.get_children():
-            self.tree.delete(item)
-        self.card_items.clear()
-
-        # Add precon decks to tree with commander info
-        for i, deck in enumerate(decks):
-            # Build deck display text with optional components
-            deck_text = deck.name
-
-            # Add commanders if available
-            if deck.commanders:
-                commanders_str = ", ".join(deck.commanders)
-                deck_text += f" [{commanders_str}]"
-
-            # Add year if available
-            if deck.year:
-                deck_text += f" ({deck.year})"
-
-            item_id = self.tree.insert("", "end", text=deck_text, values=("precon",))
-            self.card_items.append((item_id, "precon", i))
-
-        self._reset_precon_buttons()
-        self.status_bar.config(text=f"Loaded {len(decks)} precon decks")
-
-        # Update cache status
-        self._update_cache_status()
-
     def export_precons(self):
         """Import selected precon decks to .cod files."""
         if not self.precon_decks:
             self.status_bar.config(
-                text="No precon decks loaded. Please use 'Update List' first."
+                text="No precon decks loaded. Please restart the application to reload."
             )
             return
 
@@ -1211,16 +1456,8 @@ This will:
             if item_id in selected_items and deck_type == "precon":
                 deck = self.precon_decks[idx]
 
-                # Extract deck ID from URL for Moxfield API
-                deck_id = deck.url.split("/")[-1] if deck.url else ""
-
-                # Fetch detailed deck data (includes full card list)
-                detailed_deck = self.moxfield_scraper.fetch_deck_details(deck_id)
-                if not detailed_deck:
-                    continue
-
-                # Convert to Cockatrice format
-                cockatrice_deck = convert_moxfield_to_cockatrice(detailed_deck)
+                # For MTGJSON decks, convert to Cockatrice format
+                cockatrice_deck = deck.to_cockatrice()
 
                 # Save as .cod file - remove "Decklist", parentheses, and replace spaces with underscores
                 clean_name = (

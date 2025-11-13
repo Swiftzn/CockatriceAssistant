@@ -1,26 +1,30 @@
-# Cockatrice Assistant v1.0
+# Cockatrice Assistant v1.1.0
 
 ## 🎮 What is Cockatrice Assistant?
 
-A powerful desktop application that enhances your Cockatrice experience by:
-- **Importing Official Precons**: Get all official Commander Preconstructed decks
+A modern desktop application that enhances your Cockatrice experience by:
+- **2,571 Official MTG Decks**: Complete collection of preconstructed decks across all formats
+- **Smart Format Filtering**: Organize decks by Commander, Standard, Limited, Historic, and more  
+- **Advanced Search**: Real-time deck search with intelligent caching
 - **Theme Management**: Install and manage premium Cockatrice themes with version control
-- **Smart Installation**: Automatic detection and setup
+- **Professional Documentation**: Comprehensive guides and technical references
 
 ## 🚀 Quick Start
 
-1. **Download**: Get `CockatriceAssistant.exe` (19MB)
+1. **Download**: Get `CockatriceAssistant-v1.1.0.exe` (19MB)
 2. **Run**: Double-click the executable - no installation needed!
-3. **Import**: Browse and import any of 163 official precons
+3. **Import**: Browse and import any of 2,571 official precons across all formats
 4. **Customize**: Install themes to personalize your Cockatrice
 
 ## ✨ Features
 
-### 📦 Deck Import System
-- **163 Official Precons**: All WotC Commander Preconstructed decks
-- **Auto-Format**: Converts to Cockatrice .cod format automatically  
-- **Smart Placement**: Commanders properly placed in sideboard
-- **Direct Save**: Saves directly to your Cockatrice decks folder or any custom location
+### 📦 MTGJSON Integration & Deck Import
+- **2,571 Official Decks**: Complete MTG preconstructed deck collection via MTGJSON
+- **Format-Based Organization**: Commander (198), Standard (197), Limited (453), Historic, Modern, Pioneer
+- **Smart Caching**: 24-hour intelligent cache system (6x faster loading)
+- **Real-Time Search**: Instant filtering as you type across deck names, codes, and types
+- **Commander Support**: Proper sideboard placement and banner card handling
+- **Auto-Format**: Converts to Cockatrice .cod format automatically
 
 ### 🎨 Advanced Theme Management  
 - **Curated Collection**: Hand-picked, high-quality themes
@@ -39,10 +43,10 @@ A powerful desktop application that enhances your Cockatrice experience by:
 ## 💡 How to Use
 
 ### Importing Precons
-1. Open the **Deck Import** tab
-2. Browse the auto-loaded list of 163 official precons
-3. Select decks you want to import
-4. Click **Export Selected** - decks appear in Cockatrice instantly!
+1. **Auto-Loading**: App automatically loads 2,571 decks on startup with smart caching
+2. **Format Filtering**: Choose from Commander, Standard, Limited, Historic, Modern, Pioneer
+3. **Search & Select**: Use real-time search to find specific decks, then select for import
+4. **Export**: Click **Import Selected** - decks appear in Cockatrice instantly with proper formatting!
 
 ### Installing Themes
 1. Open the **Theme Management** tab
@@ -93,6 +97,7 @@ Having issues? The app includes built-in error messages and help text. Most comm
 
 ---
 
-**Cockatrice Assistant v1.0** - Enhance your Magic: The Gathering experience!
+**Cockatrice Assistant v1.1.0** - Enhance your Magic: The Gathering experience!
 
+*Built with comprehensive MTGJSON integration and professional documentation*
 *Created for the Cockatrice community 🃏*
