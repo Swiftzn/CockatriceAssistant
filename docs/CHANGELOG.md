@@ -4,7 +4,41 @@
 
 ---
 
-## Version 1.1.0 (Latest) - November 13, 2025
+## Version 1.1.2 (Latest) - November 13, 2025
+*"Critical Update Installation Fix"*
+
+### 🐛 Critical Bug Fixes
+- **Update Installation**: Fixed critical bug preventing users from installing updates
+  - Resolved method name mismatch in `src/core/updater.py`
+  - Update installation now works properly through GUI
+  - Users can successfully install new versions without manual intervention
+
+### 📦 Build Information
+- **Executable Size**: ~19.4MB standalone Windows executable
+- **Dependencies**: All dependencies bundled (no Python installation required)
+- **Performance**: Maintains all MTGJSON integration and documentation features
+
+---
+
+## Version 1.1.1 - November 13, 2025
+*"Update Dialog Display Fix"*
+
+### 🐛 Bug Fixes
+- **Update Dialog Display**: Fixed update popup window sizing and layout issues
+  - Increased dialog size from 400x250 to 500x350 to accommodate all content
+  - Improved content layout with proper spacing and centering
+  - Enhanced button positioning and keyboard navigation
+  - Fixed dialog centering to work on all screen resolutions
+- **UI Polish**: Better visual hierarchy in update installation dialog
+
+### 📦 Build Information
+- **Executable Size**: 19.4MB standalone Windows executable
+- **Dependencies**: All dependencies bundled (no Python installation required)
+- **Performance**: Maintains all MTGJSON integration features
+
+---
+
+## Version 1.1.0 - November 13, 2025
 *"MTGJSON Integration & Professional Polish"*
 
 ### ✨ New Features

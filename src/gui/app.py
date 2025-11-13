@@ -1319,54 +1319,81 @@ Click below to visit the official Cockatrice website where you can:
         """Show dialog to confirm update installation."""
         dialog = tk.Toplevel(self.root)
         dialog.title("Install Update")
-        dialog.geometry("400x250")
+        dialog.geometry("500x350")  # Increased size to accommodate all content
         dialog.transient(self.root)
         dialog.grab_set()
+        dialog.resizable(False, False)  # Prevent resizing to maintain layout
 
-        # Center the dialog
-        dialog.geometry(
-            "+%d+%d" % (self.root.winfo_rootx() + 100, self.root.winfo_rooty() + 100)
-        )
+        # Center the dialog properly
+        dialog.update_idletasks()  # Ensure geometry is calculated
+        x = (dialog.winfo_screenwidth() // 2) - (500 // 2)
+        y = (dialog.winfo_screenheight() // 2) - (350 // 2)
+        dialog.geometry(f"500x350+{x}+{y}")
+
+        # Header with icon/title
+        header_frame = ttk.Frame(dialog)
+        header_frame.pack(pady=20, padx=20, fill="x")
 
         ttk.Label(
-            dialog,
-            text="Update Ready to Install",
-            font=("TkDefaultFont", 12, "bold"),
-        ).pack(pady=15)
+            header_frame,
+            text="🎉 Update Ready to Install",
+            font=("TkDefaultFont", 14, "bold"),
+            anchor="center",
+        ).pack()
 
-        # Get update info
+        # Version info frame
+        version_frame = ttk.Frame(dialog)
+        version_frame.pack(pady=10, padx=20, fill="x")
+
         latest_version = self.update_info.get("latest_version", "unknown")
         current_version = get_current_version()
 
-        info_text = f"""Update: v{current_version} → v{latest_version}
+        ttk.Label(
+            version_frame,
+            text=f"Update: v{current_version} → v{latest_version}",
+            font=("TkDefaultFont", 11, "bold"),
+            anchor="center",
+        ).pack()
 
-The update has been downloaded successfully and is ready to install.
+        # Description frame
+        desc_frame = ttk.Frame(dialog)
+        desc_frame.pack(pady=15, padx=20, fill="both", expand=True)
+
+        desc_text = """The update has been downloaded successfully and is ready to install.
 
 This will:
 • Replace the current application with the new version
 • Close the current application
-• Start the updated application automatically"""
+• Start the updated application automatically
 
-        ttk.Label(
-            dialog,
-            text=info_text,
+Click 'Install Update' to proceed, or 'Cancel' to install later."""
+
+        desc_label = ttk.Label(
+            desc_frame,
+            text=desc_text,
             justify="center",
             font=("TkDefaultFont", 9),
-        ).pack(pady=10, padx=20)
+            anchor="center",
+        )
+        desc_label.pack(expand=True)
 
-        # Show downloaded file info
+        # File info frame
+        info_frame = ttk.Frame(dialog)
+        info_frame.pack(pady=(0, 15), padx=20, fill="x")
+
         file_size_mb = update_path.stat().st_size / (1024 * 1024)
-        file_info = f"Downloaded: {file_size_mb:.1f} MB"
+        file_info = f"Downloaded file size: {file_size_mb:.1f} MB"
         ttk.Label(
-            dialog,
+            info_frame,
             text=file_info,
             font=("TkDefaultFont", 8),
             foreground="gray",
-        ).pack(pady=(0, 15))
+            anchor="center",
+        ).pack()
 
         # Buttons frame
         btn_frame = ttk.Frame(dialog)
-        btn_frame.pack(pady=10)
+        btn_frame.pack(pady=20, padx=20, fill="x")
 
         def install_now():
             dialog.destroy()
@@ -1385,13 +1412,23 @@ This will:
                 "Update cancelled. File saved in temporary location.", "info"
             )
 
-        ttk.Button(
-            btn_frame, text="Install Update", command=install_now, width=15
-        ).pack(side="left", padx=10)
+        # Center the buttons horizontally
+        button_container = ttk.Frame(btn_frame)
+        button_container.pack(expand=True)
 
-        ttk.Button(btn_frame, text="Cancel", command=cancel_install, width=15).pack(
-            side="left", padx=10
+        install_btn = ttk.Button(
+            button_container, text="Install Update", command=install_now, width=15
         )
+        install_btn.pack(side="left", padx=10)
+
+        cancel_btn = ttk.Button(
+            button_container, text="Cancel", command=cancel_install, width=15
+        )
+        cancel_btn.pack(side="left", padx=10)
+
+        # Set focus to Install button and make it the default
+        install_btn.focus_set()
+        dialog.bind("<Return>", lambda e: install_now())
 
     def _get_current_exe_directory(self):
         """Get the directory where the current executable is located."""
