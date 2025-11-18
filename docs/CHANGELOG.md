@@ -4,7 +4,70 @@
 
 ---
 
-## Version 1.1.2 (Latest) - November 13, 2025
+## Version 1.1.5 (Latest) - November 18, 2025
+*"API Error Handling & UI Polish"*
+
+### 🐛 Bug Fixes
+- **API Error Handling**: Fixed silent failures when MTGJSON API is down (HTTP 500 errors)
+  - Deck imports now properly report errors instead of creating empty .cod files
+  - Added specific error messages for server outages and network issues
+  - Application now stops processing when API failures are detected
+- **Update Dialog**: Simplified update installation dialog
+  - Removed verbose text and reduced dialog size (400x250)
+  - Clean, minimal interface showing only essential information
+
+### 🔧 Improvements
+- **Error Reporting**: Clear distinction between API failures and file write errors
+- **User Experience**: Better feedback when external services are unavailable
+- **UI Design**: Streamlined update dialog with focused messaging
+
+### 📦 Build Information
+- **Executable Size**: ~19.4MB standalone Windows executable
+- **Dependencies**: All dependencies bundled (no Python installation required)
+- **Performance**: Robust error handling with graceful API failure recovery
+
+---
+
+## Version 1.1.4 - November 18, 2025
+*"Update Installation Enhancement"*
+
+### 🐛 Bug Fixes
+- **Update Installation**: Enhanced automatic update replacement system
+  - Fixed update process to properly replace existing executable instead of creating versioned files
+  - Added backup and restore functionality for safer updates
+  - Improved error handling with automatic rollback on failed updates
+  - Updates now replace the current executable with the same filename
+
+### 🔧 Improvements
+- **Update Safety**: Enhanced update script with backup/restore mechanism
+- **Error Recovery**: Automatic restoration of original executable if update fails
+- **User Experience**: Seamless executable replacement maintains user shortcuts and associations
+
+### 📦 Build Information
+- **Executable Size**: ~19.4MB standalone Windows executable
+- **Dependencies**: All dependencies bundled (no Python installation required)
+- **Performance**: Full MTGJSON integration with enhanced update system
+
+---
+
+## Version 1.1.3 - November 18, 2025
+*"MTGJSON Import System Fix"*
+
+### 🐛 Bug Fixes
+- **MTGJSON Import**: Fixed deck import functionality in MTGJSON system
+  - Resolved type mismatch in `get_deck_summary` method
+  - Fixed `get_preconstructed_decks` to properly convert MTGDeck objects
+  - Deck imports now populate card lists correctly instead of creating empty .cod files
+  - All 2,571 preconstructed decks now import with proper card data
+
+### 📦 Build Information
+- **Executable Size**: ~19.4MB standalone Windows executable
+- **Dependencies**: All dependencies bundled (no Python installation required)
+- **Performance**: Full MTGJSON integration with verified import functionality
+
+---
+
+## Version 1.1.2 - November 13, 2025
 *"Critical Update Installation Fix"*
 
 ### 🐛 Critical Bug Fixes

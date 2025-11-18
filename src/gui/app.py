@@ -1319,75 +1319,50 @@ Click below to visit the official Cockatrice website where you can:
         """Show dialog to confirm update installation."""
         dialog = tk.Toplevel(self.root)
         dialog.title("Install Update")
-        dialog.geometry("500x350")  # Increased size to accommodate all content
+        dialog.geometry("400x250")  # Smaller size for simplified content
         dialog.transient(self.root)
         dialog.grab_set()
         dialog.resizable(False, False)  # Prevent resizing to maintain layout
 
         # Center the dialog properly
         dialog.update_idletasks()  # Ensure geometry is calculated
-        x = (dialog.winfo_screenwidth() // 2) - (500 // 2)
-        y = (dialog.winfo_screenheight() // 2) - (350 // 2)
-        dialog.geometry(f"500x350+{x}+{y}")
+        x = (dialog.winfo_screenwidth() // 2) - (400 // 2)
+        y = (dialog.winfo_screenheight() // 2) - (250 // 2)
+        dialog.geometry(f"400x250+{x}+{y}")
 
-        # Header with icon/title
+        # Header with title
         header_frame = ttk.Frame(dialog)
-        header_frame.pack(pady=20, padx=20, fill="x")
+        header_frame.pack(pady=30, padx=20, fill="x")
 
         ttk.Label(
             header_frame,
-            text="🎉 Update Ready to Install",
+            text="Update Ready to Install",
             font=("TkDefaultFont", 14, "bold"),
             anchor="center",
         ).pack()
 
         # Version info frame
         version_frame = ttk.Frame(dialog)
-        version_frame.pack(pady=10, padx=20, fill="x")
+        version_frame.pack(pady=20, padx=20, fill="x")
 
         latest_version = self.update_info.get("latest_version", "unknown")
         current_version = get_current_version()
 
         ttk.Label(
             version_frame,
-            text=f"Update: v{current_version} → v{latest_version}",
-            font=("TkDefaultFont", 11, "bold"),
+            text=f"v{current_version} → v{latest_version}",
+            font=("TkDefaultFont", 12),
             anchor="center",
         ).pack()
 
-        # Description frame
+        # Simple description
         desc_frame = ttk.Frame(dialog)
-        desc_frame.pack(pady=15, padx=20, fill="both", expand=True)
+        desc_frame.pack(pady=30, padx=20, fill="x")
 
-        desc_text = """The update has been downloaded successfully and is ready to install.
-
-This will:
-• Replace the current application with the new version
-• Close the current application
-• Start the updated application automatically
-
-Click 'Install Update' to proceed, or 'Cancel' to install later."""
-
-        desc_label = ttk.Label(
-            desc_frame,
-            text=desc_text,
-            justify="center",
-            font=("TkDefaultFont", 9),
-            anchor="center",
-        )
-        desc_label.pack(expand=True)
-
-        # File info frame
-        info_frame = ttk.Frame(dialog)
-        info_frame.pack(pady=(0, 15), padx=20, fill="x")
-
-        file_size_mb = update_path.stat().st_size / (1024 * 1024)
-        file_info = f"Downloaded file size: {file_size_mb:.1f} MB"
         ttk.Label(
-            info_frame,
-            text=file_info,
-            font=("TkDefaultFont", 8),
-            foreground="gray",
+            desc_frame,
+            text="Install update now?",
+            font=("TkDefaultFont", 10),
             anchor="center",
         ).pack()
 
@@ -1493,29 +1468,44 @@ Click 'Install Update' to proceed, or 'Cancel' to install later."""
             if item_id in selected_items and deck_type == "precon":
                 deck = self.precon_decks[idx]
 
-                # For MTGJSON decks, convert to Cockatrice format
-                cockatrice_deck = deck.to_cockatrice()
-
-                # Save as .cod file - remove "Decklist", parentheses, and replace spaces with underscores
-                clean_name = (
-                    cockatrice_deck.deckname.replace("Decklist", "")
-                    .replace("(", "")
-                    .replace(")", "")
-                    .replace(" ", "_")
-                    .strip("_")
-                )
-                # Remove any double underscores
-                while "__" in clean_name:
-                    clean_name = clean_name.replace("__", "_")
-                filename = f"{clean_name}.cod"
-                out_path = save_dir / filename
-
                 try:
+                    # For MTGJSON decks, convert to Cockatrice format
+                    cockatrice_deck = deck.to_cockatrice()
+
+                    # Save as .cod file - remove "Decklist", parentheses, and replace spaces with underscores
+                    clean_name = (
+                        cockatrice_deck.deckname.replace("Decklist", "")
+                        .replace("(", "")
+                        .replace(")", "")
+                        .replace(" ", "_")
+                        .strip("_")
+                    )
+                    # Remove any double underscores
+                    while "__" in clean_name:
+                        clean_name = clean_name.replace("__", "_")
+                    filename = f"{clean_name}.cod"
+                    out_path = save_dir / filename
+
                     write_cod(cockatrice_deck, str(out_path))
                     imported_count += 1
+
                 except Exception as e:
-                    self.status_bar.config(text=f"Failed to write {filename}: {e}")
-                    continue
+                    # Handle both conversion errors (API failures) and file write errors
+                    deck_name = getattr(deck, "name", "Unknown Deck")
+                    error_msg = str(e)
+
+                    # Check if it's an API/network error
+                    if (
+                        "MTGJSON API" in error_msg
+                        or "server outage" in error_msg
+                        or "network issue" in error_msg
+                    ):
+                        self._set_status_message(f"Import failed: {error_msg}", "error")
+                        return  # Stop processing other decks since it's likely a general API issue
+                    else:
+                        # File write error - continue with other decks
+                        print(f"Failed to import {deck_name}: {e}")
+                        continue
 
         if imported_count > 0:
             self._set_status_message(

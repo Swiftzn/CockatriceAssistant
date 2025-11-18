@@ -222,9 +222,14 @@ class UpdateManager:
             print(f"Installing update from: {update_path}")
 
             if target_directory and target_directory.is_dir():
-                # Install to the same directory as current exe
-                install_path = target_directory / update_path.name
+                # Install to replace the current exe (use current exe name, not downloaded name)
                 current_exe = self._get_current_executable_path()
+                if current_exe and current_exe.exists():
+                    # Replace the current executable with the same name
+                    install_path = current_exe
+                else:
+                    # Fallback: use generic name if current exe path not found
+                    install_path = target_directory / "CockatriceAssistant.exe"
 
                 print(f"Installing to: {install_path}")
                 self._create_update_script(update_path, install_path, current_exe)
@@ -270,17 +275,36 @@ if "%ERRORLEVEL%"=="0" (
     goto wait_loop
 )
 
+REM Create backup of current version
+echo Creating backup...
+if exist "{target_path}" (
+    copy /Y "{target_path}" "{target_path}.backup" >nul 2>nul
+)
+
 REM Replace current exe with new version
 echo Installing new version...
-copy /Y "{source_path}" "{target_path}" >nul
+copy /Y "{source_path}" "{target_path}"
+if "%ERRORLEVEL%"=="0" (
+    echo Update installed successfully!
+    
+    REM Start new version
+    echo Starting updated application...
+    start "" "{target_path}"
+    
+    REM Clean up backup and temp files
+    timeout /t 2 /nobreak >nul
+    del "{target_path}.backup" >nul 2>nul
+    del "{source_path}" >nul 2>nul
+) else (
+    echo Update failed! Restoring backup...
+    if exist "{target_path}.backup" (
+        copy /Y "{target_path}.backup" "{target_path}" >nul 2>nul
+        del "{target_path}.backup" >nul 2>nul
+    )
+    echo Update failed - original version restored.
+)
 
-REM Start new version
-echo Starting updated application...
-start "" "{target_path}"
-
-REM Clean up
-timeout /t 2 /nobreak >nul
-del "{source_path}" >nul 2>nul
+REM Clean up script
 del "%~f0" >nul 2>nul
 """
 

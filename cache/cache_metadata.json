@@ -1,11 +1,13 @@
 {
-  "last_decklist_fetch": 1763039649.251771,
+  "last_decklist_fetch": 1763470436.6946578,
   "fetched_decks": {
     "CounterIntelligence_EOC.json": 1763036854.0674484,
     "Counterpunch_CMD.json": 1763039092.6647565,
     "KazzSFirstDeck_RQS.json": 1763039127.8324575,
     "20WaysToWin_SLD.json": 1763039253.2144516,
-    "DimirControl_Q08.json": 1763039329.5995986
+    "DimirControl_Q08.json": 1763039329.5995986,
+    "CollectorsEdition_CED.json": 1763470437.098793,
+    "SquirreledAway_BLC.json": 1763470549.95774
   },
   "cache_version": "1.0"
 }

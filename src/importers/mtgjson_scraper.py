@@ -52,11 +52,9 @@ class MTGDeck:
         deck_details = scraper.fetch_deck_details(filename)
 
         if not deck_details:
-            # Fallback: create minimal deck
-            from core.deck_parser import CockatriceDeck, CardEntry
-
-            return CockatriceDeck(
-                deckname=self.name, zone_main=[], zone_side=[], banner_card=""
+            # Raise an exception instead of creating empty deck
+            raise Exception(
+                f"Failed to fetch deck details from MTGJSON API for {self.name}. This may be due to a server outage or network issue. Please try again later."
             )
 
         data = deck_details.get("data", {})
@@ -464,7 +462,7 @@ class MTGJsonScraper:
                 filtered_decks = filtered_decks[:limit]
 
             # Convert to GUI format
-            return [self.get_deck_summary(deck) for deck in filtered_decks]
+            return [self.get_deck_summary(deck._data) for deck in filtered_decks]
 
         except Exception as e:
             print(f"Error fetching preconstructed decks: {e}")
