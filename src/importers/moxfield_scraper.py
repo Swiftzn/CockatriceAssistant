@@ -4,7 +4,13 @@ Module to fetch commander precon decklists from Moxfield's official WotC account
 Includes smart caching to speed up subsequent loads.
 """
 
-import requests
+try:
+    import cloudscraper
+    CLOUDSCRAPER_AVAILABLE = True
+except ImportError:
+    import requests
+    CLOUDSCRAPER_AVAILABLE = False
+
 import json
 import time
 import re
@@ -52,14 +58,28 @@ class MoxfieldScraper:
     """Scraper to fetch precon deck lists from Moxfield's official WotC account with smart caching."""
 
     def __init__(self, cache_dir: Optional[str] = None):
-        self.session = requests.Session()
-        self.session.headers.update(
-            {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-                "Accept": "application/json, text/plain, */*",
-                "Content-Type": "application/json",
-            }
-        )
+        # Use cloudscraper if available to bypass Cloudflare protection
+        if CLOUDSCRAPER_AVAILABLE:
+            self.session = cloudscraper.create_scraper(
+                browser={
+                    'browser': 'chrome',
+                    'platform': 'windows',
+                    'desktop': True
+                }
+            )
+        else:
+            import requests
+            self.session = requests.Session()
+            self.session.headers.update(
+                {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                    "Accept": "application/json, text/plain, */*",
+                    "Accept-Language": "en-US,en;q=0.9",
+                    "Referer": "https://moxfield.com/",
+                    "Content-Type": "application/json",
+                }
+            )
+        
         self.wotc_username = "WizardsOfTheCoast"
         self.base_url = f"https://api2.moxfield.com/v2/users/{self.wotc_username}/decks"
 
@@ -255,8 +275,16 @@ class MoxfieldScraper:
                 return cached_decks
             return []
 
-    def fetch_deck_details(self, deck_id: str) -> MoxfieldDeck | None:
-        """Fetch detailed card list from a specific Moxfield deck ID."""
+    def fetch_deck_details(self, deck_id: str, max_retries: int = 3) -> MoxfieldDeck | None:
+        """Fetch detailed card list from a specific Moxfield deck ID.
+        
+        Args:
+            deck_id: The Moxfield deck ID
+            max_retries: Maximum number of retry attempts for Cloudflare challenges
+            
+        Returns:
+            MoxfieldDeck object or None if fetch fails
+        """
         try:
             if not deck_id:
                 return None
@@ -265,10 +293,37 @@ class MoxfieldScraper:
 
             # Use Moxfield API to get deck details
             api_url = f"https://api2.moxfield.com/v2/decks/all/{deck_id}"
-            response = self.session.get(api_url, timeout=30)
-            response.raise_for_status()
-
-            data = response.json()
+            
+            # Try multiple times with delays for Cloudflare challenges
+            last_error = None
+            for attempt in range(max_retries):
+                try:
+                    if attempt > 0:
+                        wait_time = 2 ** attempt  # Exponential backoff: 2s, 4s, 8s
+                        print(f"Retry attempt {attempt + 1}/{max_retries} after {wait_time}s delay...")
+                        time.sleep(wait_time)
+                    
+                    response = self.session.get(api_url, timeout=45)
+                    
+                    if response.status_code == 403:
+                        raise Exception("Cloudflare protection detected (403 Forbidden). This may take a moment to bypass...")
+                    
+                    response.raise_for_status()
+                    data = response.json()
+                    break  # Success!
+                    
+                except Exception as e:
+                    last_error = e
+                    if attempt < max_retries - 1:
+                        print(f"Attempt {attempt + 1} failed: {e}")
+                        continue
+                    else:
+                        # Final attempt failed
+                        raise
+            else:
+                # All retries exhausted
+                if last_error:
+                    raise last_error
 
             # Extract basic info
             name = data.get("name", "Unknown Deck")

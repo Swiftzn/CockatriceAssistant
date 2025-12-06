@@ -4,7 +4,27 @@
 
 ---
 
-## Version 1.1.5 (Latest) - November 18, 2025
+## Version 1.2.1 (Latest) - December 6, 2025
+*"Moxfield Import Fix"*
+
+### 🐛 Bug Fixes
+- **Moxfield Import**: Fixed broken Moxfield deck imports due to Cloudflare API protection
+  - Integrated `cloudscraper` library to bypass Cloudflare challenges
+  - Added retry logic with exponential backoff for handling API rate limits
+  - Moxfield imports now work for all deck types (Commander, Standard, Modern, etc.)
+  - Properly handles commander decks with correct card counts (98 mainboard + 2 commanders = 100 total)
+
+### 🔧 Improvements
+- **API Resilience**: Enhanced error handling for protected API endpoints
+- **Retry Logic**: Automatic retry mechanism for transient API failures
+- **User Experience**: Better error messages when API requests fail
+
+### 📦 Dependencies
+- **New Requirement**: Added `cloudscraper>=1.2.71` for Cloudflare bypass capability
+
+---
+
+## Version 1.1.5 - November 18, 2025
 *"API Error Handling & UI Polish"*
 
 ### 🐛 Bug Fixes
