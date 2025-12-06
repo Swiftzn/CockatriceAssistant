@@ -4,7 +4,30 @@
 
 ---
 
-## Version 1.2.2 (Latest) - December 6, 2025
+## Version 1.2.3 (Latest) - December 6, 2025
+*"Auto-Update System Overhaul"*
+
+### ✨ New Features
+- **Automatic Application Restart**: Update installer now automatically relaunches the application after successful update
+- **PowerShell-Based Installer**: Replaced batch script with PowerShell for more reliable process management
+- **Consistent Filename**: Application always uses `CockatriceAssistant.exe` (shortcuts never break)
+  - GitHub releases still use versioned names (e.g., `CockatriceAssistant-v1.2.3.exe`)
+  - Installer renames to consistent filename during installation
+
+### 🔧 Improvements
+- **No More Python DLL Errors**: PowerShell script properly launches PyInstaller executables
+- **Industry-Standard Update Flow**: Follows common indie application update patterns
+- **Better User Experience**: Automatic restart after update - no manual intervention needed
+- **Improved Reliability**: More robust process detection and file handling
+- **Visual Feedback**: Color-coded PowerShell console shows clear update progress
+
+### 🐛 Bug Fixes
+- **Relaunch Issues**: Fixed Python DLL errors when trying to restart application after update
+- **Shortcut Preservation**: User shortcuts and taskbar pins remain functional after updates
+
+---
+
+## Version 1.2.2 - December 6, 2025
 *"Auto-Update Installer Fix"*
 
 ### 🐛 Bug Fixes

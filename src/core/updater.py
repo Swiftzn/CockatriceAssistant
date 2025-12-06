@@ -222,11 +222,8 @@ class UpdateManager:
             print(f"Installing update from: {update_path}")
 
             if target_directory and target_directory.is_dir():
-                # Get the downloaded filename (e.g., "CockatriceAssistant-v1.2.1.exe")
-                downloaded_filename = update_path.name
-                
-                # Install path should be in target directory with downloaded filename
-                install_path = target_directory / downloaded_filename
+                # Always use consistent filename for installation
+                install_path = target_directory / "CockatriceAssistant.exe"
                 
                 current_exe = self._get_current_executable_path()
 
@@ -259,85 +256,103 @@ class UpdateManager:
     def _create_update_script(
         self, source_path: Path, target_path: Path, current_exe: Optional[Path]
     ) -> None:
-        """Create a batch script to handle the automatic update installation."""
+        """Create a PowerShell script to handle the automatic update installation."""
         try:
             # Create backup of old version if it exists
             backup_path = None
             if current_exe and current_exe.exists():
                 backup_path = current_exe.with_suffix('.exe.old')
             
-            script_content = f"""@echo off
-echo Installing Cockatrice Assistant Update...
-echo.
+            # Use PowerShell for more reliable process launching
+            script_content = f"""# Cockatrice Assistant Update Installer
+Write-Host "Installing Cockatrice Assistant Update..." -ForegroundColor Cyan
+Write-Host ""
 
-REM Wait for current application to close
-echo Waiting for application to close...
-timeout /t 2 /nobreak >nul
+# Wait for current application to close
+Write-Host "Waiting for application to close..." -ForegroundColor Yellow
+Start-Sleep -Seconds 2
 
-:wait_loop
-tasklist /FI "IMAGENAME eq {current_exe.name if current_exe else 'CockatriceAssistant*.exe'}" 2>NUL | find /I /N "{current_exe.name if current_exe else 'CockatriceAssistant'}" >NUL
-if "%ERRORLEVEL%"=="0" (
-    timeout /t 1 /nobreak >nul
-    goto wait_loop
-)
+$processName = "{current_exe.stem if current_exe else 'CockatriceAssistant'}"
+while (Get-Process -Name $processName -ErrorAction SilentlyContinue) {{
+    Start-Sleep -Seconds 1
+}}
 
-echo Application closed.
-echo.
+Write-Host "Application closed." -ForegroundColor Green
+Write-Host ""
 
-REM Rename old version as backup (if exists)
-{"if exist \"{current_exe}\" (" if current_exe else ""}
-{"    echo Creating backup of old version..." if current_exe else ""}
-{"    move /Y \"{current_exe}\" \"{backup_path}\" >nul 2>nul" if current_exe and backup_path else ""}
-{")" if current_exe else ""}
-echo.
+# Create backup of old version
+{f'if (Test-Path "{current_exe}") {{' if current_exe else ''}
+{f'    Write-Host "Creating backup of old version..." -ForegroundColor Yellow' if current_exe else ''}
+{f'    Move-Item -Path "{current_exe}" -Destination "{backup_path}" -Force -ErrorAction SilentlyContinue' if current_exe and backup_path else ''}
+{f'}}' if current_exe else ''}
+Write-Host ""
 
-REM Move new version to target directory
-echo Installing new version...
-move /Y "{source_path}" "{target_path}"
-if "%ERRORLEVEL%"=="0" (
-    echo.
-    echo ============================================
-    echo  Update installed successfully!
-    echo ============================================
-    echo.
-    echo New version: {target_path.name}
-    echo Location: {target_path.parent}
-    echo.
-    echo Please manually start the new executable:
-    echo {target_path}
-    echo.
+# Install new version
+Write-Host "Installing new version..." -ForegroundColor Yellow
+try {{
+    Move-Item -Path "{source_path}" -Destination "{target_path}" -Force
     
-    REM Clean up old backup after a delay
-    timeout /t 3 /nobreak >nul
-    {"del \"{backup_path}\" >nul 2>nul" if backup_path else ""}
-) else (
-    echo.
-    echo ============================================
-    echo  Update installation failed!
-    echo ============================================
-    echo.
-    {"if exist \"{backup_path}\" (" if backup_path else ""}
-{"        echo Restoring old version..." if backup_path else ""}
-{"        move /Y \"{backup_path}\" \"{current_exe}\" >nul 2>nul" if current_exe and backup_path else ""}
-{"    )" if backup_path else ""}
-)
+    Write-Host ""
+    Write-Host "============================================" -ForegroundColor Green
+    Write-Host " Update installed successfully!" -ForegroundColor Green
+    Write-Host "============================================" -ForegroundColor Green
+    Write-Host ""
+    Write-Host "Installed to: {target_path}" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "Starting updated application..." -ForegroundColor Yellow
+    
+    # Clean up old backup
+    {f'if (Test-Path "{backup_path}") {{' if backup_path else ''}
+    {f'    Remove-Item "{backup_path}" -Force -ErrorAction SilentlyContinue' if backup_path else ''}
+    {f'}}' if backup_path else ''}
+    
+    # Start the new version
+    Start-Sleep -Seconds 1
+    Start-Process -FilePath "{target_path}" -WorkingDirectory "{target_path.parent}"
+    
+    Write-Host ""
+    Write-Host "Application launched successfully!" -ForegroundColor Green
+    Write-Host "This window will close in 3 seconds..." -ForegroundColor Gray
+    Start-Sleep -Seconds 3
+    
+}} catch {{
+    Write-Host ""
+    Write-Host "============================================" -ForegroundColor Red
+    Write-Host " Update installation failed!" -ForegroundColor Red
+    Write-Host "============================================" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "Error: $_" -ForegroundColor Red
+    
+    # Restore backup if it exists
+    {f'if (Test-Path "{backup_path}") {{' if backup_path else ''}
+    {f'    Write-Host "Restoring old version..." -ForegroundColor Yellow' if backup_path else ''}
+    {f'    Move-Item -Path "{backup_path}" -Destination "{current_exe}" -Force -ErrorAction SilentlyContinue' if current_exe and backup_path else ''}
+    {f'    Write-Host "Old version restored." -ForegroundColor Green' if backup_path else ''}
+    {f'}}' if backup_path else ''}
+    
+    Write-Host ""
+    Write-Host "Press any key to close..." -ForegroundColor Gray
+    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+}}
 
-echo.
-echo Press any key to close this window...
-pause >nul
-
-REM Clean up script itself
-del "%~f0" >nul 2>nul
+# Clean up script
+Remove-Item $MyInvocation.MyCommand.Path -Force -ErrorAction SilentlyContinue
 """
 
-            # Create update script in temp directory
-            script_path = Path(tempfile.gettempdir()) / "cockatrice_update.bat"
-            with open(script_path, "w") as f:
+            # Create PowerShell script in temp directory
+            script_path = Path(tempfile.gettempdir()) / "cockatrice_update.ps1"
+            with open(script_path, "w", encoding="utf-8") as f:
                 f.write(script_content)
 
-            # Run the update script in a visible window so user can see what's happening
+            # Run the PowerShell script with execution policy bypass
             subprocess.Popen(
-                ["cmd.exe", "/c", str(script_path)],
+                [
+                    "powershell.exe",
+                    "-ExecutionPolicy",
+                    "Bypass",
+                    "-File",
+                    str(script_path),
+                ],
                 creationflags=subprocess.CREATE_NEW_CONSOLE,
             )
             print(f"Update script created: {script_path}")
