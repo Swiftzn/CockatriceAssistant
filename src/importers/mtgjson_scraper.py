@@ -69,6 +69,7 @@ class MTGDeck:
                     "set": card.get("setCode", ""),
                     "collector_number": card.get("number", ""),
                     "uuid": card.get("uuid", ""),
+                    "layout": card.get("layout", ""),
                 }
             )
 
@@ -82,13 +83,19 @@ class MTGDeck:
                     "set": card.get("setCode", ""),
                     "collector_number": card.get("number", ""),
                     "uuid": card.get("uuid", ""),
+                    "layout": card.get("layout", ""),
                 }
             )
 
         # Get commanders
         commanders = []
         for commander in data.get("commander", []):
-            commanders.append(commander.get("name", ""))
+            commanders.append(
+                {
+                    "name": commander.get("name", ""),
+                    "layout": commander.get("layout", ""),
+                }
+            )
 
         # Determine format
         filters = DeckFilters()

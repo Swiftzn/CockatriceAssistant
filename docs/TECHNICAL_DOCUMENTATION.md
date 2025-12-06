@@ -166,6 +166,24 @@ def convert_universal_to_cockatrice(universal_deck: UniversalDeck) -> Cockatrice
         # Random card as banner
 ```
 
+#### **Card Name Processing**
+```python
+def clean_card_name(name: str, layout: str = "") -> str:
+    # Layout-aware name cleaning for Cockatrice compatibility
+    if "//" in name:
+        if layout == "adventure":
+            return name.strip()  # Preserve full name for Adventure cards
+        else:
+            return name.split("//")[0].strip()  # Front face only for others
+    return name.strip()
+```
+
+**Supported Card Layouts:**
+- **Adventure Cards**: Full name preserved (e.g., "Murderous Rider // Swift End")
+- **Transform Cards**: Front face only (e.g., "Delver of Secrets")
+- **Modal DFC**: Front face only (e.g., "Jace, Vryn's Prodigy")
+- **Normal Cards**: Name unchanged
+
 ### Filtering and Search
 
 #### **DeckFilters Class**

@@ -62,13 +62,15 @@ class DeckScraper(ABC):
         pass
 
 
-def clean_card_name(name: str) -> str:
+def clean_card_name(name: str, layout: str = "") -> str:
     """Clean card name for Cockatrice compatibility.
 
-    Handles dual-faced cards by taking the first name before '//'
+    Handles dual-faced cards by taking the first name before '//' except for
+    Adventure cards which need to keep the full name including '//'
 
     Args:
         name: Raw card name from any source
+        layout: Card layout type (e.g., "adventure", "transform", "modal_dfc")
 
     Returns:
         Cleaned card name suitable for Cockatrice
@@ -76,9 +78,14 @@ def clean_card_name(name: str) -> str:
     if not name:
         return ""
 
-    # Handle dual-faced cards - take the first name before '//'
+    # Handle cards with '//' separator
     if "//" in name:
-        return name.split("//")[0].strip()
+        # For Adventure cards, keep the full name including '//'
+        if layout == "adventure":
+            return name.strip()
+        # For other dual-faced cards, take the first name before '//'
+        else:
+            return name.split("//")[0].strip()
 
     return name.strip()
 
@@ -107,9 +114,10 @@ def convert_universal_to_cockatrice(universal_deck: UniversalDeck) -> Cockatrice
     def make_card_entries(card_list: List[Dict[str, Any]]) -> List[CardEntry]:
         entries = []
         for card in card_list:
-            # Clean the card name to handle dual-faced cards
+            # Clean the card name to handle dual-faced cards, preserving Adventure card names
             raw_name = card.get("name", "")
-            clean_name = clean_card_name(raw_name)
+            layout = card.get("layout", "")
+            clean_name = clean_card_name(raw_name, layout)
 
             entry = CardEntry(
                 number=card.get("quantity", 1),
@@ -133,8 +141,16 @@ def convert_universal_to_cockatrice(universal_deck: UniversalDeck) -> Cockatrice
     if deck_format == "commander" or universal_deck.commanders:
         # For commander decks, put commanders in sideboard
         for commander in universal_deck.commanders:
-            if commander.strip():
-                commander_name = clean_card_name(commander)
+            # Handle both string commanders (for backward compatibility) and dict commanders
+            if isinstance(commander, dict):
+                commander_name_raw = commander.get("name", "")
+                commander_layout = commander.get("layout", "")
+            else:
+                commander_name_raw = str(commander)
+                commander_layout = ""
+
+            if commander_name_raw.strip():
+                commander_name = clean_card_name(commander_name_raw, commander_layout)
                 entry = CardEntry(
                     number=1,
                     name=commander_name,
@@ -153,7 +169,9 @@ def convert_universal_to_cockatrice(universal_deck: UniversalDeck) -> Cockatrice
             import random
 
             random_card = random.choice(universal_deck.mainboard)
-            banner_card = clean_card_name(random_card.get("name", ""))
+            banner_card = clean_card_name(
+                random_card.get("name", ""), random_card.get("layout", "")
+            )
 
     cockatrice_deck = CockatriceDeck(
         deckname=universal_deck.name,

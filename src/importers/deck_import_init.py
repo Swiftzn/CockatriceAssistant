@@ -15,6 +15,7 @@ if str(src_dir) not in sys.path:
 from importers.deck_import import deck_import_manager
 from importers.moxfield_import import MoxfieldImportScraper
 from importers.mtggoldfish_import import MTGGoldfishImportScraper
+from importers.archidekt_import import ArchidektImportScraper
 
 
 def initialize_deck_importers():
@@ -24,6 +25,9 @@ def initialize_deck_importers():
 
     # Register MTGGoldfish scraper
     deck_import_manager.register_scraper(MTGGoldfishImportScraper())
+
+    # Register Archidekt scraper
+    deck_import_manager.register_scraper(ArchidektImportScraper())
 
     print(
         f"Initialized deck importers for: {', '.join(deck_import_manager.get_supported_sites())}"

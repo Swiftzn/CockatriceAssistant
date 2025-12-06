@@ -402,6 +402,12 @@ def clean_card_name(name: str) -> str:
 
     Handles dual-faced cards by taking the first name before '//'
 
+    Note: This currently doesn't handle Adventure cards correctly - they need
+    to preserve the '//' separator. However, Moxfield doesn't provide layout
+    information, so this would need to be resolved differently (e.g., by
+    matching against a known list of Adventure cards or fetching additional
+    data from Scryfall/MTGJSON).
+
     Args:
         name: Raw card name from Moxfield
 
@@ -412,6 +418,7 @@ def clean_card_name(name: str) -> str:
         return ""
 
     # Handle dual-faced cards - take the first name before '//'
+    # TODO: Adventure cards should preserve the '//' but we don't have layout info
     if "//" in name:
         return name.split("//")[0].strip()
 
