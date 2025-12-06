@@ -8702,6 +8702,76 @@
   },
   {
     "code": "SLD",
+    "fileName": "AvatarTheLastAirbenderALotToLearn_SLD",
+    "name": "Avatar: The Last Airbender: A Lot to Learn",
+    "releaseDate": "2025-11-18",
+    "type": "Secret Lair Drop"
+  },
+  {
+    "code": "SLD",
+    "fileName": "AvatarTheLastAirbenderALotToLearnFoilEdition_SLD",
+    "name": "Avatar: The Last Airbender: A Lot to Learn Foil Edition",
+    "releaseDate": "2025-11-18",
+    "type": "Secret Lair Drop"
+  },
+  {
+    "code": "SLD",
+    "fileName": "AvatarTheLastAirbenderEverythingChanged_SLD",
+    "name": "Avatar: The Last Airbender: Everything Changed",
+    "releaseDate": "2025-11-18",
+    "type": "Secret Lair Drop"
+  },
+  {
+    "code": "SLD",
+    "fileName": "AvatarTheLastAirbenderEverythingChangedFoilEdition_SLD",
+    "name": "Avatar: The Last Airbender: Everything Changed Foil Edition",
+    "releaseDate": "2025-11-18",
+    "type": "Secret Lair Drop"
+  },
+  {
+    "code": "SLD",
+    "fileName": "AvatarTheLastAirbenderMyCabbages_SLD",
+    "name": "Avatar: The Last Airbender: My Cabbages!",
+    "releaseDate": "2025-11-18",
+    "type": "Secret Lair Drop"
+  },
+  {
+    "code": "SLD",
+    "fileName": "AvatarTheLastAirbenderMyCabbagesFoilEdition_SLD",
+    "name": "Avatar: The Last Airbender: My Cabbages! Foil Edition",
+    "releaseDate": "2025-11-18",
+    "type": "Secret Lair Drop"
+  },
+  {
+    "code": "SLD",
+    "fileName": "AvatarTheLastAirbenderOneWithTheElements_SLD",
+    "name": "Avatar: The Last Airbender: One with the Elements",
+    "releaseDate": "2025-11-18",
+    "type": "Secret Lair Drop"
+  },
+  {
+    "code": "SLD",
+    "fileName": "AvatarTheLastAirbenderOneWithTheElementsFoilEdition_SLD",
+    "name": "Avatar: The Last Airbender: One with the Elements Foil Edition",
+    "releaseDate": "2025-11-18",
+    "type": "Secret Lair Drop"
+  },
+  {
+    "code": "SLD",
+    "fileName": "AvatarTheLastAirbenderTheEmberIslandPlayers_SLD",
+    "name": "Avatar: The Last Airbender: The Ember Island Players",
+    "releaseDate": "2025-11-18",
+    "type": "Secret Lair Drop"
+  },
+  {
+    "code": "SLD",
+    "fileName": "AvatarTheLastAirbenderTheEmberIslandPlayersFoilEdition_SLD",
+    "name": "Avatar: The Last Airbender: The Ember Island Players Foil Edition",
+    "releaseDate": "2025-11-18",
+    "type": "Secret Lair Drop"
+  },
+  {
+    "code": "SLD",
     "fileName": "BadToTheBones_SLD",
     "name": "Bad to the Bones",
     "releaseDate": "2023-08-29",
@@ -17995,5 +18065,467 @@
     "name": "White Deck",
     "releaseDate": "2025-09-26",
     "type": "Welcome Deck"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Aang_TLE",
+    "name": "Aang",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Adaptive_TLE",
+    "name": "Adaptive",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Adept1_TLE",
+    "name": "Adept (1)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Adept2_TLE",
+    "name": "Adept (2)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Airbending_TLE",
+    "name": "Airbending",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Alliance1_TLE",
+    "name": "Alliance (1)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Alliance2_TLE",
+    "name": "Alliance (2)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "AtTheZoo_TLE",
+    "name": "At the Zoo",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Azula_TLE",
+    "name": "Azula",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "BadAdvice_TLE",
+    "name": "Bad Advice",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "BountyHunter1_TLE",
+    "name": "Bounty Hunter (1)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "BountyHunter2_TLE",
+    "name": "Bounty Hunter (2)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Bumi_TLE",
+    "name": "Bumi",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Cabbages_TLE",
+    "name": "Cabbages",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "EarthKingdom1_TLE",
+    "name": "Earth Kingdom (1)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "EarthKingdom2_TLE",
+    "name": "Earth Kingdom (2)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "EarthRumble1_TLE",
+    "name": "Earth Rumble (1)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "EarthRumble2_TLE",
+    "name": "Earth Rumble (2)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Earthbending1_TLE",
+    "name": "Earthbending (1)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Earthbending2_TLE",
+    "name": "Earthbending (2)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "FireNation_TLE",
+    "name": "Fire Nation",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Firebending1_TLE",
+    "name": "Firebending (1)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Firebending2_TLE",
+    "name": "Firebending (2)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "FreedomFighters_TLE",
+    "name": "Freedom Fighters",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Gliding1_TLE",
+    "name": "Gliding (1)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Gliding2_TLE",
+    "name": "Gliding (2)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "HeiBai1_TLE",
+    "name": "Hei Bai (1)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "HeiBai2_TLE",
+    "name": "Hei Bai (2)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Hunting1_TLE",
+    "name": "Hunting (1)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Hunting2_TLE",
+    "name": "Hunting (2)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Insurgent1_TLE",
+    "name": "Insurgent (1)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Insurgent2_TLE",
+    "name": "Insurgent (2)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Iroh_TLE",
+    "name": "Iroh",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Katara_TLE",
+    "name": "Katara",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Kyoshi_TLE",
+    "name": "Kyoshi",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Learning1_TLE",
+    "name": "Learning (1)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Learning2_TLE",
+    "name": "Learning (2)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Lessons1_TLE",
+    "name": "Lessons (1)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Lessons2_TLE",
+    "name": "Lessons (2)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Librarian_TLE",
+    "name": "Librarian",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Musicians_TLE",
+    "name": "Musicians",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Nightmares_TLE",
+    "name": "Nightmares",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Ozai_TLE",
+    "name": "Ozai",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Powerful1_TLE",
+    "name": "Powerful (1)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Powerful2_TLE",
+    "name": "Powerful (2)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Rebelling1_TLE",
+    "name": "Rebelling (1)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Rebelling2_TLE",
+    "name": "Rebelling (2)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Reinforced1_TLE",
+    "name": "Reinforced (1)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Reinforced2_TLE",
+    "name": "Reinforced (2)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Relentless1_TLE",
+    "name": "Relentless (1)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Relentless2_TLE",
+    "name": "Relentless (2)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Roku_TLE",
+    "name": "Roku",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Shrines_TLE",
+    "name": "Shrines",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "SiegeEngines_TLE",
+    "name": "Siege Engines",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Soaring1_TLE",
+    "name": "Soaring (1)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Soaring2_TLE",
+    "name": "Soaring (2)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "SparkySparky1_TLE",
+    "name": "Sparky Sparky (1)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "SparkySparky2_TLE",
+    "name": "Sparky Sparky (2)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Spirit_TLE",
+    "name": "Spirit",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Swordmaster_TLE",
+    "name": "Swordmaster",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Toph_TLE",
+    "name": "Toph",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Underwater_TLE",
+    "name": "Underwater",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Warriors_TLE",
+    "name": "Warriors",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Wise1_TLE",
+    "name": "Wise (1)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Wise2_TLE",
+    "name": "Wise (2)",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
+  },
+  {
+    "code": "TLE",
+    "fileName": "Zuko_TLE",
+    "name": "Zuko",
+    "releaseDate": "2025-11-20",
+    "type": "Jumpstart"
   }
 ]

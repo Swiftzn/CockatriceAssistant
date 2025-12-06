@@ -4,7 +4,80 @@
 
 ---
 
-## Version 1.1.5 (Latest) - November 18, 2025
+## Version 1.2.0 (Latest) - November 27, 2025
+*"Archidekt Deck Import Support"*
+
+### ✨ New Features
+- **Archidekt.com Integration**: Added complete support for Archidekt deck imports
+  - Direct URL-based importing from popular modern deck building platform
+  - Supports all Archidekt deck URLs (format: `https://archidekt.com/decks/{id}/{name}`)
+  - Automatic format detection (Commander, Standard, Modern, etc.)
+  - Category-based filtering respecting deck composition settings
+  - Proper handling of Maybeboard exclusion (cards marked as not included)
+- **Multi-Platform Deck Import**: Expanded deck source ecosystem
+  - **Archidekt**: Modern deck building with advanced categorization ✨ **NEW**
+  - **Moxfield**: Community deck sharing platform
+  - **MTGGoldfish**: Popular MTG website database
+  - **MTGJSON**: Official preconstructed decks
+- **Enhanced Commander Support**: Improved Commander format handling
+  - Accurate 100-card validation (1 commander + 99 library cards)
+  - Proper quantity accounting for multi-quantity cards (e.g., 2x Forest)
+  - Correct commander placement (separate from mainboard/sideboard)
+- **Advanced API Integration**: Robust API handling with comprehensive error recovery
+  - Category inclusion/exclusion filtering based on deck settings
+  - Nested JSON parsing for complex deck structures
+  - Layout-aware card processing for Adventure cards and special formats
+
+### 🔧 Improvements
+- **Deck Import Manager**: Enhanced universal import system
+  - Automatic scraper selection based on URL patterns
+  - Consistent conversion to Cockatrice format across all sources
+  - Unified error handling and progress reporting
+- **Card Quantity Handling**: Fixed quantity counting in deck statistics
+  - Display shows actual card totals, not just unique card entries
+  - Proper accounting for multi-quantity basic lands and staples
+  - Accurate Commander format validation (exactly 100 cards)
+- **API Error Recovery**: Improved handling of external service issues
+  - Graceful degradation when APIs are unavailable
+  - Clear error messages distinguishing network vs parsing issues
+  - Robust timeout handling and connection management
+
+### 🐛 Bug Fixes
+- **Commander Deck Composition**: Fixed commander duplication in sideboard
+  - Commanders now properly stored separately from mainboard/sideboard
+  - Correct Cockatrice format conversion with commander in appropriate zone
+  - Accurate total card counting for format validation
+- **Quantity Display**: Fixed deck statistics showing incorrect card counts
+  - Display now shows total cards by quantity, not unique entries
+  - Proper handling of cards with quantity > 1 (basic lands, etc.)
+  - Accurate format validation based on total card count
+
+### 📦 Build Information  
+- **Executable Size**: 18.6MB standalone Windows executable (optimized from ~19.4MB)
+- **Dependencies**: All dependencies bundled (no Python installation required)
+- **Performance**: Full multi-platform import support with robust error handling
+
+---
+
+## Version 1.1.6 - November 23, 2025
+*"Adventure Card Support"*
+
+### 🐛 Bug Fixes
+- **Adventure Card Names**: Fixed Adventure cards showing as "Unknown" in Cockatrice
+  - Adventure cards (e.g., "Murderous Rider // Swift End") now preserve the full name including "//"
+  - Other dual-faced cards (Transform, Modal DFC) still correctly use only the front face name
+  - Added layout detection to properly handle different card types from MTGJSON data
+- **Card Name Processing**: Enhanced card name cleaning to be layout-aware
+  - MTGJSON imports now include layout information for proper card name handling
+  - Backward compatibility maintained for existing import formats
+
+### 🔧 Improvements
+- **MTGJSON Integration**: Better handling of card metadata including layout information
+- **Code Documentation**: Added comments about Adventure card handling limitations in Moxfield imports
+
+---
+
+## Version 1.1.5 - November 18, 2025
 *"API Error Handling & UI Polish"*
 
 ### 🐛 Bug Fixes
@@ -321,8 +394,9 @@ Present         │ • Current stable release
 
 ### Project Stats
 
-- **Deck Collection**: 2,571 official MTG preconstructed decks
-- **Format Support**: 7 distinct MTG formats with accurate categorization
+- **Deck Sources**: 4 major platforms (MTGJSON, Moxfield, MTGGoldfish, Archidekt)
+- **Deck Collection**: 2,571+ official MTG preconstructed decks + unlimited community decks
+- **Format Support**: All MTG formats with accurate categorization and validation
 - **Performance**: 6x faster loading with smart cache system
 - **Platform Support**: Windows (primary), macOS, Linux compatible
 - **Documentation**: Comprehensive user and developer guides
@@ -370,10 +444,11 @@ Format Detection: Accurate Commander vs non-Commander recognition
 
 ## Future Roadmap
 
-### Planned Features (v1.2.0)
+### Planned Features (v1.3.0)
 - **Enhanced Search**: Advanced search with card name filtering and mana cost filters
 - **Deck Statistics**: Analysis tools showing format distribution and deck characteristics
 - **Bulk Operations**: Export multiple decks simultaneously
+- **Additional Deck Sources**: EDHRec, TappedOut, and other popular platforms
 - **Theme Previews**: Visual theme previews before installation
 
 ### Long-term Vision (v2.0.0+)
@@ -415,4 +490,4 @@ Format Detection: Accurate Commander vs non-Commander recognition
 
 *For technical support or contributions, visit: https://github.com/Swiftzn/CockatriceAssistant*
 
-*Last updated: November 13, 2025*
+*Last updated: November 27, 2025*

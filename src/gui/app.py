@@ -1319,20 +1319,20 @@ Click below to visit the official Cockatrice website where you can:
         """Show dialog to confirm update installation."""
         dialog = tk.Toplevel(self.root)
         dialog.title("Install Update")
-        dialog.geometry("400x250")  # Smaller size for simplified content
         dialog.transient(self.root)
         dialog.grab_set()
-        dialog.resizable(False, False)  # Prevent resizing to maintain layout
+        dialog.resizable(True, True)  # Allow resizing for dynamic content
 
-        # Center the dialog properly
-        dialog.update_idletasks()  # Ensure geometry is calculated
-        x = (dialog.winfo_screenwidth() // 2) - (400 // 2)
-        y = (dialog.winfo_screenheight() // 2) - (250 // 2)
-        dialog.geometry(f"400x250+{x}+{y}")
+        # Set minimum size to ensure usability
+        dialog.minsize(350, 200)
+
+        # Main content frame for better organization
+        main_frame = ttk.Frame(dialog)
+        main_frame.pack(fill="both", expand=True, padx=20, pady=20)
 
         # Header with title
-        header_frame = ttk.Frame(dialog)
-        header_frame.pack(pady=30, padx=20, fill="x")
+        header_frame = ttk.Frame(main_frame)
+        header_frame.pack(pady=(0, 20), fill="x")
 
         ttk.Label(
             header_frame,
@@ -1342,8 +1342,8 @@ Click below to visit the official Cockatrice website where you can:
         ).pack()
 
         # Version info frame
-        version_frame = ttk.Frame(dialog)
-        version_frame.pack(pady=20, padx=20, fill="x")
+        version_frame = ttk.Frame(main_frame)
+        version_frame.pack(pady=(0, 20), fill="x")
 
         latest_version = self.update_info.get("latest_version", "unknown")
         current_version = get_current_version()
@@ -1356,8 +1356,8 @@ Click below to visit the official Cockatrice website where you can:
         ).pack()
 
         # Simple description
-        desc_frame = ttk.Frame(dialog)
-        desc_frame.pack(pady=30, padx=20, fill="x")
+        desc_frame = ttk.Frame(main_frame)
+        desc_frame.pack(pady=(0, 30), fill="x")
 
         ttk.Label(
             desc_frame,
@@ -1367,8 +1367,8 @@ Click below to visit the official Cockatrice website where you can:
         ).pack()
 
         # Buttons frame
-        btn_frame = ttk.Frame(dialog)
-        btn_frame.pack(pady=20, padx=20, fill="x")
+        btn_frame = ttk.Frame(main_frame)
+        btn_frame.pack(fill="x")
 
         def install_now():
             dialog.destroy()
@@ -1404,6 +1404,25 @@ Click below to visit the official Cockatrice website where you can:
         # Set focus to Install button and make it the default
         install_btn.focus_set()
         dialog.bind("<Return>", lambda e: install_now())
+
+        # Pack all content and then calculate dynamic size and center the dialog
+        dialog.update_idletasks()  # Ensure all widgets are rendered
+
+        # Get the required size based on content
+        req_width = dialog.winfo_reqwidth()
+        req_height = dialog.winfo_reqheight()
+
+        # Add some padding to the required size
+        width = max(350, req_width + 40)  # Minimum 350px width
+        height = max(200, req_height + 20)  # Minimum 200px height
+
+        # Center the dialog on screen
+        screen_width = dialog.winfo_screenwidth()
+        screen_height = dialog.winfo_screenheight()
+        x = (screen_width // 2) - (width // 2)
+        y = (screen_height // 2) - (height // 2)
+
+        dialog.geometry(f"{width}x{height}+{x}+{y}")
 
     def _get_current_exe_directory(self):
         """Get the directory where the current executable is located."""

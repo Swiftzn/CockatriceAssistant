@@ -200,14 +200,14 @@ Auto-Detection: Finds Cockatrice themes folder
 ## 🔧 Architecture
 
 ### Core Components
-- **MTGJSON Integration**: Official MTG data source with smart caching
-- **Universal Deck Format**: Standardized deck representation across sources  
-- **Multi-Format Support**: Format-aware conversion and filtering
-- **Plugin Architecture**: Extensible scraper system for future sources
+- **Multi-Platform Import**: Support for 4 major deck sources (MTGJSON, Moxfield, MTGGoldfish, Archidekt)
+- **Universal Deck Format**: Standardized deck representation across all sources  
+- **Smart Caching**: Intelligent 24-hour cache system for optimal performance
+- **Plugin Architecture**: Extensible scraper system for seamless platform integration
 
 ### Data Pipeline
 ```
-MTGJSON API → Smart Cache → Format Detection → Universal Format → Cockatrice .cod
+Deck Sources (MTGJSON/Moxfield/MTGGoldfish/Archidekt) → Universal Format → Cockatrice .cod
 ```
 
 ### Performance Features
