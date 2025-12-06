@@ -60,14 +60,32 @@ class MoxfieldScraper:
     def __init__(self, cache_dir: Optional[str] = None):
         # Use cloudscraper if available to bypass Cloudflare protection
         if CLOUDSCRAPER_AVAILABLE:
-            self.session = cloudscraper.create_scraper(
-                browser={
-                    'browser': 'chrome',
-                    'platform': 'windows',
-                    'desktop': True
-                }
-            )
+            try:
+                print("Initializing cloudscraper for Moxfield...")
+                self.session = cloudscraper.create_scraper(
+                    browser={
+                        'browser': 'chrome',
+                        'platform': 'windows',
+                        'desktop': True
+                    }
+                )
+                print("Cloudscraper initialized successfully")
+            except Exception as e:
+                print(f"WARNING: Failed to initialize cloudscraper: {e}")
+                print("Falling back to regular requests session")
+                import requests
+                self.session = requests.Session()
+                self.session.headers.update(
+                    {
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                        "Accept": "application/json, text/plain, */*",
+                        "Accept-Language": "en-US,en;q=0.9",
+                        "Referer": "https://moxfield.com/",
+                        "Content-Type": "application/json",
+                    }
+                )
         else:
+            print("Cloudscraper not available, using regular requests")
             import requests
             self.session = requests.Session()
             self.session.headers.update(
