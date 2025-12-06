@@ -21,6 +21,7 @@
 
 ### 📦 Dependencies
 - **New Requirement**: Added `cloudscraper>=1.2.71` for Cloudflare bypass capability
+
 ## Version 1.2.0 (Latest) - November 27, 2025
 *"Archidekt Deck Import Support"*
 
