@@ -8,7 +8,7 @@ Features implemented:
 """
 
 import tkinter as tk
-from tkinter import ttk, filedialog
+from tkinter import ttk, filedialog, messagebox
 from pathlib import Path
 import os
 import webbrowser
@@ -1375,9 +1375,16 @@ Click below to visit the official Cockatrice website where you can:
             # Get the current executable directory for installation
             current_exe_dir = self._get_current_exe_directory()
             if update_manager.install_update(update_path, current_exe_dir):
-                self._set_status_message("Installing update...", "success")
-                # Give a moment for the message to display
-                self.root.after(1500, self.root.quit)
+                # Show message about manual restart
+                messagebox.showinfo(
+                    "Update Installing",
+                    "The update is being installed.\n\n"
+                    "A console window will show the installation progress.\n\n"
+                    "Please close this application and manually start the new version when installation completes.",
+                    parent=self.root
+                )
+                # Close the application to allow update to proceed
+                self.root.after(500, self.root.quit)
             else:
                 self._set_status_message("Failed to install update", "error")
 

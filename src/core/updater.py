@@ -222,23 +222,21 @@ class UpdateManager:
             print(f"Installing update from: {update_path}")
 
             if target_directory and target_directory.is_dir():
-                # Install to replace the current exe (use current exe name, not downloaded name)
+                # Get the downloaded filename (e.g., "CockatriceAssistant-v1.2.1.exe")
+                downloaded_filename = update_path.name
+                
+                # Install path should be in target directory with downloaded filename
+                install_path = target_directory / downloaded_filename
+                
                 current_exe = self._get_current_executable_path()
-                if current_exe and current_exe.exists():
-                    # Replace the current executable with the same name
-                    install_path = current_exe
-                else:
-                    # Fallback: use generic name if current exe path not found
-                    install_path = target_directory / "CockatriceAssistant.exe"
 
                 print(f"Installing to: {install_path}")
                 self._create_update_script(update_path, install_path, current_exe)
                 return True
             else:
-                # Fallback: just run the temp file
-                print("No target directory specified, running from temp location")
-                subprocess.Popen([str(update_path)], shell=True)
-                return True
+                # Fallback: just move to temp location
+                print("No target directory specified, using temp location")
+                return False
 
         except Exception as e:
             print(f"Installation failed: {e}")
@@ -263,11 +261,19 @@ class UpdateManager:
     ) -> None:
         """Create a batch script to handle the automatic update installation."""
         try:
+            # Create backup of old version if it exists
+            backup_path = None
+            if current_exe and current_exe.exists():
+                backup_path = current_exe.with_suffix('.exe.old')
+            
             script_content = f"""@echo off
 echo Installing Cockatrice Assistant Update...
-timeout /t 2 /nobreak >nul
+echo.
 
 REM Wait for current application to close
+echo Waiting for application to close...
+timeout /t 2 /nobreak >nul
+
 :wait_loop
 tasklist /FI "IMAGENAME eq {current_exe.name if current_exe else 'CockatriceAssistant*.exe'}" 2>NUL | find /I /N "{current_exe.name if current_exe else 'CockatriceAssistant'}" >NUL
 if "%ERRORLEVEL%"=="0" (
@@ -275,36 +281,52 @@ if "%ERRORLEVEL%"=="0" (
     goto wait_loop
 )
 
-REM Create backup of current version
-echo Creating backup...
-if exist "{target_path}" (
-    copy /Y "{target_path}" "{target_path}.backup" >nul 2>nul
-)
+echo Application closed.
+echo.
 
-REM Replace current exe with new version
+REM Rename old version as backup (if exists)
+{"if exist \"{current_exe}\" (" if current_exe else ""}
+{"    echo Creating backup of old version..." if current_exe else ""}
+{"    move /Y \"{current_exe}\" \"{backup_path}\" >nul 2>nul" if current_exe and backup_path else ""}
+{")" if current_exe else ""}
+echo.
+
+REM Move new version to target directory
 echo Installing new version...
-copy /Y "{source_path}" "{target_path}"
+move /Y "{source_path}" "{target_path}"
 if "%ERRORLEVEL%"=="0" (
-    echo Update installed successfully!
+    echo.
+    echo ============================================
+    echo  Update installed successfully!
+    echo ============================================
+    echo.
+    echo New version: {target_path.name}
+    echo Location: {target_path.parent}
+    echo.
+    echo Please manually start the new executable:
+    echo {target_path}
+    echo.
     
-    REM Start new version
-    echo Starting updated application...
-    start "" "{target_path}"
-    
-    REM Clean up backup and temp files
-    timeout /t 2 /nobreak >nul
-    del "{target_path}.backup" >nul 2>nul
-    del "{source_path}" >nul 2>nul
+    REM Clean up old backup after a delay
+    timeout /t 3 /nobreak >nul
+    {"del \"{backup_path}\" >nul 2>nul" if backup_path else ""}
 ) else (
-    echo Update failed! Restoring backup...
-    if exist "{target_path}.backup" (
-        copy /Y "{target_path}.backup" "{target_path}" >nul 2>nul
-        del "{target_path}.backup" >nul 2>nul
-    )
-    echo Update failed - original version restored.
+    echo.
+    echo ============================================
+    echo  Update installation failed!
+    echo ============================================
+    echo.
+    {"if exist \"{backup_path}\" (" if backup_path else ""}
+{"        echo Restoring old version..." if backup_path else ""}
+{"        move /Y \"{backup_path}\" \"{current_exe}\" >nul 2>nul" if current_exe and backup_path else ""}
+{"    )" if backup_path else ""}
 )
 
-REM Clean up script
+echo.
+echo Press any key to close this window...
+pause >nul
+
+REM Clean up script itself
 del "%~f0" >nul 2>nul
 """
 
@@ -313,18 +335,21 @@ del "%~f0" >nul 2>nul
             with open(script_path, "w") as f:
                 f.write(script_content)
 
-            # Run the update script
+            # Run the update script in a visible window so user can see what's happening
             subprocess.Popen(
-                [str(script_path)],
-                shell=True,
-                creationflags=subprocess.CREATE_NO_WINDOW,
+                ["cmd.exe", "/c", str(script_path)],
+                creationflags=subprocess.CREATE_NEW_CONSOLE,
             )
             print(f"Update script created: {script_path}")
 
         except Exception as e:
             print(f"Failed to create update script: {e}")
-            # Fallback to simple launch
-            subprocess.Popen([str(source_path)], shell=True)
+            # Fallback: just notify user
+            import tkinter.messagebox as messagebox
+            messagebox.showinfo(
+                "Update Downloaded",
+                f"Update downloaded to:\n{source_path}\n\nPlease close this application and run the new version manually."
+            )
 
     def open_releases_page(self) -> None:
         """Open the GitHub releases page in the default browser."""

@@ -4,7 +4,25 @@
 
 ---
 
-## Version 1.2.1 (Latest) - December 6, 2025
+## Version 1.2.2 (Latest) - December 6, 2025
+*"Auto-Update Installer Fix"*
+
+### 🐛 Bug Fixes
+- **Auto-Update Installation**: Fixed update installer issues
+  - Update now preserves the new version's filename (e.g., `CockatriceAssistant-v1.2.2.exe`) instead of renaming to old version
+  - Removed automatic relaunch that was causing Python DLL errors
+  - Update script now shows visible console window with installation progress
+  - Old version is backed up as `.exe.old` before installing new version
+  - User is now prompted to manually restart after update completes
+
+### 🔧 Improvements
+- **User Experience**: Clearer feedback during update process with visible installation console
+- **Error Recovery**: Better backup/restore mechanism for failed updates
+- **Installation Transparency**: Users can see exactly what's happening during the update
+
+---
+
+## Version 1.2.1 - December 6, 2025
 *"Moxfield Import Fix"*
 
 ### 🐛 Bug Fixes
