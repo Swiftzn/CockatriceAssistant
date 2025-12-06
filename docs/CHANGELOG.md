@@ -4,7 +4,6 @@
 
 ---
 
-<<<<<<< HEAD
 ## Version 1.2.1 (Latest) - December 6, 2025
 *"Moxfield Import Fix"*
 
@@ -22,7 +21,6 @@
 
 ### 📦 Dependencies
 - **New Requirement**: Added `cloudscraper>=1.2.71` for Cloudflare bypass capability
-=======
 ## Version 1.2.0 (Latest) - November 27, 2025
 *"Archidekt Deck Import Support"*
 
@@ -93,7 +91,6 @@
 ### 🔧 Improvements
 - **MTGJSON Integration**: Better handling of card metadata including layout information
 - **Code Documentation**: Added comments about Adventure card handling limitations in Moxfield imports
->>>>>>> c178c45c3598275919c58e847facee00ad43323d
 
 ---
 
